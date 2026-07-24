@@ -5,9 +5,13 @@
     export KUBECONFIG="{{ repo_root }}/kubeconfig"
     helm repo add fake-gpu-operator https://runai.jfrog.io/artifactory/api/helm/fake-gpu-operator-charts-prod --force-update
     helm repo update fake-gpu-operator
+    version_args=()
+    if [[ -n "{{ fake_gpu_operator_version }}" ]]; then
+      version_args=(--version "{{ fake_gpu_operator_version }}")
+    fi
     helm upgrade -i gpu-operator fake-gpu-operator/fake-gpu-operator \
       -n gpu-operator --create-namespace \
-      --version "{{ fake_gpu_operator_version }}" \
+      "${version_args[@]}" \
       --set 'topology.nodePools.default.gpuCount=8' \
       --set 'topology.nodePools.default.gpuProduct=NVIDIA-H100-80GB-HBM3' \
       --set 'topology.nodePools.default.gpuMemory=81920' \
