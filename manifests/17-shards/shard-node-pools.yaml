@@ -4,20 +4,20 @@ items:
   - apiVersion: v1
     kind: Node
     metadata: { name: shard-h100-01, labels: { type: kwok, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/node-pool: h100, kubernetes.io/hostname: shard-h100-01 } }
-    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, effect: NoSchedule } ] }
     status: { capacity: { cpu: "16", memory: 128Gi, pods: "110" }, allocatable: { cpu: "16", memory: 128Gi, pods: "110" } }
   - apiVersion: v1
     kind: Node
     metadata: { name: shard-h100-02, labels: { type: kwok, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/node-pool: h100, kubernetes.io/hostname: shard-h100-02 } }
-    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, effect: NoSchedule } ] }
     status: { capacity: { cpu: "16", memory: 128Gi, pods: "110" }, allocatable: { cpu: "16", memory: 128Gi, pods: "110" } }
   - apiVersion: v1
     kind: Node
     metadata: { name: shard-l40s-01, labels: { type: kwok, nvidia.com/gpu.machine: NVIDIA-L40S, kai.scheduler/node-pool: l40s, kubernetes.io/hostname: shard-l40s-01 } }
-    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, effect: NoSchedule } ] }
     status: { capacity: { cpu: "16", memory: 128Gi, pods: "110" }, allocatable: { cpu: "16", memory: 128Gi, pods: "110" } }
   - apiVersion: v1
     kind: Node
     metadata: { name: shard-l40s-02, labels: { type: kwok, nvidia.com/gpu.machine: NVIDIA-L40S, kai.scheduler/node-pool: l40s, kubernetes.io/hostname: shard-l40s-02 } }
-    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, effect: NoSchedule } ] }
     status: { capacity: { cpu: "16", memory: 128Gi, pods: "110" }, allocatable: { cpu: "16", memory: 128Gi, pods: "110" } }
