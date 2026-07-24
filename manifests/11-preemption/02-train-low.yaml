@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: train-low
+  namespace: kai-lab11
+  labels: { kai-scheduler-101/chapter: "11" }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: train-low } }
+  template:
+    metadata:
+      labels:
+        app: train-low
+        kai.scheduler/queue: preemption-demo
+        kai-scheduler-101/chapter: "11"
+    spec:
+      schedulerName: kai-scheduler
+      priorityClassName: train
+      tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+      resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
+      containers:
+        - name: train
+          image: ubuntu:22.04
+          command: ["bash", "-lc"]
+          args: ["sleep 3600"]
+          resources: { claims: [ { name: gpu } ] }

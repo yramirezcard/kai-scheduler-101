@@ -1,0 +1,117 @@
+# Preemption Within a Queue
+
+Preemption is intra-queue enforcement. Once resources have reached a queue, workload priority decides which workloads run first and which already-running workloads can be evicted.
+
+KAI uses the workload's `priorityClassName` for three related decisions:
+
+- **Scheduling order**: higher-priority workloads move ahead of lower-priority workloads inside the same queue.
+- **Preemptibility**: by default, priority values below `100` are preemptible, while priority values `100` or higher are non-preemptible.
+- **Preemption**: a higher-priority workload can evict a lower-priority preemptible workload, but only within the same queue.
+
+For preemption to occur, all of these rules must be true:
+
+| Rule | Meaning |
+|------|---------|
+| Same queue | The preemptor and victim must belong to the same queue. Cross-queue recovery is reclaim, not preemption. |
+| Victim is preemptible | By default, the victim priority must be below `100`. |
+| Strictly lower priority | Equal priority is not enough. The preemptor must have a higher priority than the victim. |
+| Victim is running | KAI preempts an actively running victim Pod to free the needed resource. |
+
+Preemption cannot cross queue boundaries, cannot evict non-preemptible workloads, and cannot evict workloads with equal or higher priority.
+
+<PreemptionAnimation />
+
+Apply the priority classes first so the workload priority vocabulary exists. This defines `train` as priority `50`, `build` as priority `100`, and `inference` as priority `125`.
+
+```bash
+kubectl apply -f manifests/10-priority/priority-classes.yaml
+```
+
+Display the setup manifest. It creates the lab namespace, a one-GPU DRA claim template, and a small queue with exactly two GPU slots. This queue is intentionally small so the training workload can fill it.
+
+```bash
+cat manifests/11-preemption/01-setup.yaml
+```
+
+Apply the setup manifest.
+
+```bash
+kubectl apply -f manifests/11-preemption/01-setup.yaml
+```
+
+Display the low-priority training workload. It creates two replicas, each with `priorityClassName: train` and one GPU claim. Because the queue has quota `2`, these two Pods are expected to occupy the queue's GPU capacity.
+
+```bash
+cat manifests/11-preemption/02-train-low.yaml
+```
+
+Apply the training workload.
+
+```bash
+kubectl apply -f manifests/11-preemption/02-train-low.yaml
+```
+
+List the Pods after training starts. At this point, the two `train` Pods should be the only workload consuming the queue's GPUs.
+
+```bash
+kubectl get pods -n kai-lab11 -o wide
+```
+
+Display the high-priority inference Pod. It uses the same queue but `priorityClassName: inference`, which is higher than `train`.
+
+```bash
+cat manifests/11-preemption/03-inference-high.yaml
+```
+
+Apply the inference Pod. This is the moment that creates preemption pressure: the queue is full, the new Pod has higher priority, and the running `train` Pods are preemptible.
+
+```bash
+kubectl apply -f manifests/11-preemption/03-inference-high.yaml
+```
+
+List the Pods again. Look for the inference Pod becoming scheduled and one of the lower-priority train Pods being terminated, evicted, or recreated by the Deployment.
+
+```bash
+kubectl get pods -n kai-lab11 -o wide
+```
+
+Read recent events. Look for messages that explain scheduling order, preemption, or pending state.
+
+```bash
+kubectl get events -n kai-lab11 --sort-by=.lastTimestamp | tail -40
+```
+
+Describe the high-priority Pod for a pod-level event view.
+
+```bash
+kubectl describe pod -n kai-lab11 inference-high | sed -n '/Events:/,$p'
+```
+
+## Clean Up
+
+Delete the high-priority inference Pod first.
+
+```bash
+kubectl delete -f manifests/11-preemption/03-inference-high.yaml --ignore-not-found
+```
+
+Delete the training workload.
+
+```bash
+kubectl delete -f manifests/11-preemption/02-train-low.yaml --ignore-not-found
+```
+
+Delete the namespace, DRA claim template, and queue.
+
+```bash
+kubectl delete -f manifests/11-preemption/01-setup.yaml --ignore-not-found
+```
+
+## What Just Happened
+
+You submitted a classic inference-preempts-train example. The lesson is not that inference always wins everywhere; it wins only within the policy boundary of its own queue and only against preemptible lower-priority victims.
+
+## Sources
+
+- [Workload Priority](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/priority/README.md)
+- [Scheduling Deep Dive - Workload Priority Scheduling Within a Queue](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/scheduling-deep-dive/README.md#workload-priority-scheduling-within-a-queue)

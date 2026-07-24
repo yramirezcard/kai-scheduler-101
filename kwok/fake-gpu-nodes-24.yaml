@@ -1,0 +1,125 @@
+# Expands the simulated fleet to 2 blocks x 3 racks x 4 hosts.
+# Applying this file is idempotent and includes the initial four nodes.
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-01, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-a, kai.scheduler/topology-rack: rack-a1, kubernetes.io/hostname: kwok-gpu-01 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-02, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-a, kai.scheduler/topology-rack: rack-a1, kubernetes.io/hostname: kwok-gpu-02 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-03, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-a, kai.scheduler/topology-rack: rack-a1, kubernetes.io/hostname: kwok-gpu-03 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-04, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-a, kai.scheduler/topology-rack: rack-a1, kubernetes.io/hostname: kwok-gpu-04 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-05, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-a, kai.scheduler/topology-rack: rack-a2, kubernetes.io/hostname: kwok-gpu-05 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-06, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-a, kai.scheduler/topology-rack: rack-a2, kubernetes.io/hostname: kwok-gpu-06 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-07, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-a, kai.scheduler/topology-rack: rack-a2, kubernetes.io/hostname: kwok-gpu-07 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-08, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-a, kai.scheduler/topology-rack: rack-a2, kubernetes.io/hostname: kwok-gpu-08 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-09, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-a, kai.scheduler/topology-rack: rack-a3, kubernetes.io/hostname: kwok-gpu-09 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-10, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-a, kai.scheduler/topology-rack: rack-a3, kubernetes.io/hostname: kwok-gpu-10 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-11, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-a, kai.scheduler/topology-rack: rack-a3, kubernetes.io/hostname: kwok-gpu-11 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-12, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-a, kai.scheduler/topology-rack: rack-a3, kubernetes.io/hostname: kwok-gpu-12 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-13, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-b, kai.scheduler/topology-rack: rack-b1, kubernetes.io/hostname: kwok-gpu-13 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-14, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-b, kai.scheduler/topology-rack: rack-b1, kubernetes.io/hostname: kwok-gpu-14 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-15, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-b, kai.scheduler/topology-rack: rack-b1, kubernetes.io/hostname: kwok-gpu-15 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-16, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-b, kai.scheduler/topology-rack: rack-b1, kubernetes.io/hostname: kwok-gpu-16 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-17, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-b, kai.scheduler/topology-rack: rack-b2, kubernetes.io/hostname: kwok-gpu-17 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-18, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-b, kai.scheduler/topology-rack: rack-b2, kubernetes.io/hostname: kwok-gpu-18 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-19, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-b, kai.scheduler/topology-rack: rack-b2, kubernetes.io/hostname: kwok-gpu-19 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-20, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-b, kai.scheduler/topology-rack: rack-b2, kubernetes.io/hostname: kwok-gpu-20 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-21, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-b, kai.scheduler/topology-rack: rack-b3, kubernetes.io/hostname: kwok-gpu-21 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-22, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-b, kai.scheduler/topology-rack: rack-b3, kubernetes.io/hostname: kwok-gpu-22 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-23, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-b, kai.scheduler/topology-rack: rack-b3, kubernetes.io/hostname: kwok-gpu-23 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: kwok-gpu-24, labels: { type: kwok, run.ai/simulated-gpu-node-pool: default, nvidia.com/gpu.family: hopper, nvidia.com/gpu.machine: NVIDIA-DGX-H100, kai.scheduler/topology-block: block-b, kai.scheduler/topology-rack: rack-b3, kubernetes.io/hostname: kwok-gpu-24 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "96", memory: 768Gi, pods: "110" }, allocatable: { cpu: "96", memory: 768Gi, pods: "110" } }

@@ -1,0 +1,12 @@
+apiVersion: resource.nvidia.com/v1beta1
+kind: ComputeDomain
+metadata:
+  name: gb200-compute-domain-example
+  namespace: kai-lab20
+  labels:
+    kai-scheduler-101/chapter: "20"
+spec:
+  numNodes: 0
+  channel:
+    resourceClaimTemplate:
+      name: imex-channel-0

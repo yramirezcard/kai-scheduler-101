@@ -1,0 +1,49 @@
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: drf-parent
+  labels:
+    kai-scheduler-101/chapter: "07"
+spec:
+  displayName: "DRF Resource Pool"
+  resources:
+    gpu: { quota: 10, limit: 10, overQuotaWeight: 1 }
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: vision-team
+  labels:
+    kai-scheduler-101/chapter: "07"
+spec:
+  displayName: "Vision Team"
+  parentQueue: drf-parent
+  priority: 2
+  resources:
+    gpu: { quota: 2, limit: 10, overQuotaWeight: 2 }
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: llm-team
+  labels:
+    kai-scheduler-101/chapter: "07"
+spec:
+  displayName: "LLM Team"
+  parentQueue: drf-parent
+  priority: 2
+  resources:
+    gpu: { quota: 2, limit: 10, overQuotaWeight: 1 }
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: data-processing
+  labels:
+    kai-scheduler-101/chapter: "07"
+spec:
+  displayName: "Data Processing"
+  parentQueue: drf-parent
+  priority: 1
+  resources:
+    gpu: { quota: 3, limit: 10, overQuotaWeight: 1 }

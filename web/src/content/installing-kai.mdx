@@ -1,0 +1,55 @@
+# Installing KAI with Helm
+
+KAI is installed as a set of Kubernetes controllers and custom resources. Helm installs the operator and the default scheduler stack. The chart version is pinned so the lab is repeatable.
+
+First inspect the values file used by the lab. It enables GPU sharing support and keeps reservation pod resources intentionally small for the simulated environment.
+
+```bash
+cat manifests/01-install/kai-install-values.yaml
+```
+
+Create the namespace. --dry-run=client -o yaml | kubectl apply -f -` lets the same command work whether the namespace exists or not.
+
+```bash
+kubectl create namespace kai-scheduler --dry-run=client -o yaml | kubectl apply -f -
+```
+
+Install the pinned KAI Scheduler Helm chart from the GHCR OCI registry.
+
+```bash
+helm upgrade -i kai-scheduler oci://ghcr.io/kai-scheduler/kai-scheduler/kai-scheduler -n kai-scheduler --version v0.16.5 -f manifests/01-install/kai-install-values.yaml
+```
+
+Wait for KAI deployments to settle. If a deployment is still starting, this command holds until rollout finishes or the timeout is reached.
+
+```bash
+kubectl rollout status deployment -n kai-scheduler --timeout=240s
+```
+
+List KAI Pods. The exact names can vary by chart internals, but you should see scheduler, operator, admission, binder, and controller components.
+
+```bash
+kubectl get pods -n kai-scheduler
+```
+
+
+Inspect the default queues. Fresh KAI installs create a default parent queue and a default leaf queue so you can submit a workload immediately.
+
+```bash
+kubectl get queues
+```
+
+Read the main KAI Config object. The operator reconciles this declarative configuration into running components.
+
+```bash
+kubectl get config kai-config -o yaml | sed -n '1,160p'
+```
+
+## What Just Happened
+
+You installed KAI v0.16.5 and confirmed that its control plane, CRDs, and default queue hierarchy are present. KAI is now ready to schedule workloads that set `schedulerName: kai-scheduler` and a queue label.
+
+## Sources
+
+- [KAI Scheduler releases](https://github.com/kai-scheduler/KAI-Scheduler/releases)
+- [KAI Quick Start](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/quickstart/README.md)

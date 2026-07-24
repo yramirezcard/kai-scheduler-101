@@ -1,0 +1,61 @@
+# Inside a Scheduling Cycle
+
+KAI runs a sequence of actions during a scheduling cycle. The default order is important: non-disruptive actions run before disruptive actions.
+
+<SchedulingCycle />
+
+You have already seen the two disruptive resource-recovery actions in previous chapters. **Reclaim** recovers over-quota resources across queues, while **Preempt** evicts lower-priority preemptible work inside one queue. The next chapter demonstrates **Consolidate**, the non-disruptive action that tries to reduce fragmentation by moving work only when the scheduler can place it again.
+
+The cycle is:
+
+- **Allocate**: bind workloads to available resources.
+- **Consolidate**: reduce fragmentation when workloads can be moved safely.
+- **Reclaim**: recover over-quota, preemptible resources across queues.
+- **Preempt**: evict lower-priority preemptible work inside the same queue.
+- **StaleGangEviction**: evict gangs that no longer satisfy their minimums.
+
+Display an intentionally difficult workload. It asks for an unrealistic CPU amount so you can inspect scheduler events.
+
+```bash
+cat manifests/15-cycle/stuck-workload.yaml
+```
+
+Apply the stuck workload.
+
+```bash
+kubectl apply -f manifests/15-cycle/stuck-workload.yaml
+```
+
+Describe the Pod and jump straight to events.
+
+```bash
+kubectl describe pod -n kai-lab15 explain-pending | sed -n '/Events:/,$p'
+```
+
+Read the namespace event stream.
+
+```bash
+kubectl get events -n kai-lab15 --sort-by=.lastTimestamp | tail -30
+```
+
+List KAI scheduler logs for additional context.
+
+```bash
+kubectl logs -n kai-scheduler deploy/kai-scheduler --tail=120
+```
+
+## Clean Up
+
+Delete the stuck workload namespace so its pending Pod does not keep appearing in later scheduling events.
+
+```bash
+kubectl delete namespace kai-lab15 --ignore-not-found
+```
+
+## What Just Happened
+
+You used a pending workload as a debugging probe. Events are the first diagnostic layer because they tell you which scheduling decision blocked placement before you reach for metrics or snapshots.
+
+## Sources
+
+- [Scheduling Deep Dive - Scheduling Cycle](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/scheduling-deep-dive/README.md)

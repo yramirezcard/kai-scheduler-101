@@ -1,0 +1,70 @@
+# The Operator & CRDs
+
+KAI is configured declaratively. The operator watches KAI custom resources and reconciles the scheduler stack. Workloads then interact with scheduling APIs such as `Queue`, `PodGroup`, `BindRequest`, `Topology`, and `SchedulingShard`.
+
+<OperatorCrdsDiagram />
+
+Inspect the installed KAI CRDs. This command gives you the available API surface.
+
+```bash
+kubectl get crds | grep -E 'kai.scheduler|scheduling.run.ai'
+```
+
+Inspect the KAI Config object. This is the operator-managed root configuration.
+
+```bash
+kubectl get config kai-config -o yaml | sed -n '1,180p'
+```
+
+Inspect the default queue hierarchy created at install time.
+
+```bash
+kubectl get queues
+```
+
+Before submitting the first workload, display the manifest. Notice the namespace, DRA `ResourceClaimTemplate`, `schedulerName: kai-scheduler`, and `kai.scheduler/queue` label.
+
+```bash
+cat manifests/03-crds/default-dra-pod.yaml
+```
+
+Apply the manifest. The Pod requests a GPU through a DRA claim template rather than a legacy GPU limit.
+
+```bash
+kubectl apply -f manifests/03-crds/default-dra-pod.yaml
+```
+
+Watch the Pod and selected node.
+
+```bash
+kubectl get pod -n kai-lab03 -o wide
+```
+
+Inspect the ResourceClaim created from the template. This is the device request Kubernetes tracks for the Pod.
+
+```bash
+kubectl get resourceclaims -n kai-lab03
+```
+
+Read scheduling events. Events are the fastest way to understand whether KAI accepted, delayed, or rejected a workload.
+
+```bash
+kubectl describe pod -n kai-lab03 default-queue-dra-pod | sed -n '/Events:/,$p'
+```
+
+## Clean Up
+
+This chapter created a single Pod and a ResourceClaimTemplate in `kai-lab03`. Delete the manifest so those resources do not reserve simulated GPU capacity later.
+
+```bash
+kubectl delete -f manifests/03-crds/default-dra-pod.yaml --ignore-not-found
+```
+
+## What Just Happened
+
+You submitted a KAI-managed Pod that uses DRA. KAI can now reason about the workload through queue policy while the binder coordinates the final bind and device-claim state.
+
+## Sources
+
+- [KAI Quick Start](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/quickstart/README.md)
+- [Dynamic Resource Allocation](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/dra/README.md)

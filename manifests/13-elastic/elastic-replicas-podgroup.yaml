@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kai-lab13
+  labels:
+    kai-scheduler-101/chapter: "13"
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: elastic-demo
+  labels:
+    kai-scheduler-101/chapter: "13"
+spec:
+  resources:
+    gpu: { quota: 3, limit: 4, overQuotaWeight: 1 }
+---
+apiVersion: scheduling.run.ai/v2
+kind: PodGroup
+metadata:
+  name: elastic-four-replicas
+  namespace: kai-lab13
+  labels:
+    kai-scheduler-101/chapter: "13"
+spec:
+  queue: elastic-demo
+  minSubGroup: 3
+  subGroups:
+    - name: replica-1
+      minMember: 1
+    - name: replica-2
+      minMember: 1
+    - name: replica-3
+      minMember: 1
+    - name: replica-4
+      minMember: 1

@@ -1,0 +1,117 @@
+# Topology-Aware Scheduling
+
+Topology-aware scheduling places related Pods with awareness of physical or logical domains. On real hardware those domains might be blocks, racks, hosts, NVLink domains, or failure zones. In this lab they are labels on KWOK nodes.
+
+KAI gets topology information from two places:
+
+- Kubernetes node labels describe where each node belongs, such as `kai.scheduler/topology-block`, `kai.scheduler/topology-rack`, and `kubernetes.io/hostname`.
+- The KAI `Topology` CRD defines the ordered hierarchy of those labels. In this lab, `lab-topology` is `block -> rack -> host`.
+
+Workloads opt into topology-aware placement with annotations. `kai.scheduler/topology` selects the Topology object. A required placement annotation sets the broadest domain that must contain the whole workload. A preferred placement annotation asks the scheduler to keep Pods closer together inside that required boundary when possible.
+
+The sample workload requires block-level placement and prefers rack-level locality. With the 24-node KWOK fleet, there are two blocks, each with three racks, and each rack has four hosts. The Job asks for four workers with `batch-min-member: "4"`. Because a single rack has exactly four hosts in the simulated pool, the expected result is that KAI can satisfy the required block constraint and should prefer placing the four workers in one rack when resources are available. If the preferred rack cannot fit all workers, the scheduler can still place within the required block boundary rather than spreading across both blocks.
+
+KAI also supports Multi-Level Topology Aware Scheduling for hierarchical PodGroups. Instead of giving one topology rule to the whole workload, each SubGroup can carry its own `topologyConstraint`. For example, a root PodGroup can require the entire workload inside one zone, a mid-level SubGroup can require prefill and decode components inside a smaller domain, and leaf SubGroups can require their workers on one rack. This is useful for distributed serving and other multi-role workloads where not every component has the same locality requirement.
+
+<TopologyMap />
+
+Display the 24-node KWOK expansion. It models 2 blocks, 3 racks per block, and 4 hosts per rack.
+
+```bash
+cat kwok/fake-gpu-nodes-24.yaml
+```
+
+Apply the expanded fake fleet.
+
+```bash
+kubectl apply -f kwok/fake-gpu-nodes-24.yaml
+```
+
+Count the fake nodes.
+
+```bash
+kubectl get nodes -l type=kwok --no-headers | wc -l
+```
+
+Show topology labels on the fake nodes.
+
+```bash
+kubectl get nodes -l type=kwok -L kai.scheduler/topology-block,kai.scheduler/topology-rack
+```
+
+Display the Topology CR.
+
+```bash
+cat manifests/18-topology/topology.yaml
+```
+
+Apply the Topology CR. This tells KAI how to turn the KWOK node labels into a hierarchy.
+
+```bash
+kubectl apply -f manifests/18-topology/topology.yaml
+```
+
+Display the rack-local workload. Focus on the topology annotations and the gang minimum.
+
+```bash
+cat manifests/18-topology/rack-local-workload.yaml
+```
+
+Apply the rack-local workload.
+
+```bash
+kubectl apply -f manifests/18-topology/rack-local-workload.yaml
+```
+
+Inspect the Pod placement.
+
+```bash
+kubectl get pods -n kai-lab18 -o wide
+```
+
+Show the topology labels on the simulated nodes again so you can compare the scheduled Pod nodes against their block and rack.
+
+```bash
+kubectl get nodes -l type=kwok -L kai.scheduler/topology-block,kai.scheduler/topology-rack
+```
+
+Read namespace events if placement is pending or if the topology plugin explains a different choice.
+
+```bash
+kubectl get events -n kai-lab18 --sort-by=.lastTimestamp
+```
+
+## Clean Up
+
+Delete the topology workload namespace. This removes the Job, Pods, and ResourceClaims.
+
+```bash
+kubectl delete namespace kai-lab18 --ignore-not-found
+```
+
+Delete the cluster-scoped topology queue and Topology CR.
+
+```bash
+kubectl delete queue topology-demo --ignore-not-found
+```
+
+Delete the Topology object.
+
+```bash
+kubectl delete topology lab-topology --ignore-not-found
+```
+
+Return the simulated fleet to the original four KWOK nodes so later GPU labs see the expected smaller cluster again.
+
+```bash
+kubectl delete node kwok-gpu-05 kwok-gpu-06 kwok-gpu-07 kwok-gpu-08 kwok-gpu-09 kwok-gpu-10 kwok-gpu-11 kwok-gpu-12 kwok-gpu-13 kwok-gpu-14 kwok-gpu-15 kwok-gpu-16 kwok-gpu-17 kwok-gpu-18 kwok-gpu-19 kwok-gpu-20 kwok-gpu-21 kwok-gpu-22 kwok-gpu-23 kwok-gpu-24 --ignore-not-found
+```
+
+## What Just Happened
+
+You turned labels into a topology tree and asked KAI to place a gang with locality constraints. The required block constraint prevents cross-block placement. The preferred rack constraint asks KAI to keep workers closer together inside the selected block, matching the official example pattern: first pick a feasible required domain, then order nodes inside that domain to improve local proximity.
+
+## Sources
+
+- [Topology Aware Scheduling](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/topology/README.md)
+- [Multi-Level Topology Aware Scheduling](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/topology/multilevel.md)

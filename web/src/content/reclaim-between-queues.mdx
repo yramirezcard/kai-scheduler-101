@@ -1,0 +1,89 @@
+# Reclaim Between Queues
+
+Reclaim is KAI's cross-queue resource movement mechanism. Unlike intra-queue preemption, which stays inside a single queue, reclaim moves resources **between queues**. It only targets resources a queue is consuming **beyond its guaranteed quota** — in-quota resources are always protected.
+
+## Reclaim Conditions
+
+KAI enforces all four conditions simultaneously before selecting a reclaim victim:
+
+| # | Condition | Explanation |
+|---|-----------|-------------|
+| 1 | **Different queue** | Victim and requester must be in separate queues. Same-queue eviction is intra-queue preemption, not reclaim. |
+| 2 | **Preemptible workload** | The victim pod must have a priority value below `100`. Workloads with priority `≥ 100` are non-preemptible and cannot be evicted by reclaim even if their queue is over-quota. |
+| 3 | **Victim queue above share** | The victim queue must be consuming more resources than its deserved quota or computed fair-share, depending on the active strategy. |
+| 4 | **Requester below share** | The requesting queue must be below its deserved quota or fair-share. A queue that already holds what it deserves cannot trigger reclaim. |
+
+## Reclaim Strategies
+
+### Fair Share Reclaim
+
+Fair Share Reclaim lets a workload from a queue that is **below fair-share** evict workloads from a queue that has **exceeded fair-share**. This strategy keeps the cluster close to the fair-share values computed from quota, active demand, hierarchy, priority, and weight.
+
+Use this mental model when a queue has already received its guaranteed quota, but another queue is still entitled to more according to fair-share. The victim is not chosen just because it is busy; it is eligible because it is above the share it currently deserves.
+
+### Quota Reclaim
+
+Quota Reclaim lets a workload from a queue that is **below quota** evict workloads from a queue that has **exceeded quota**. This protects each queue's guaranteed floor before the scheduler worries about more subtle fair-share balancing.
+
+Use this mental model when quota is a contract. If the queue `reclaim-high` has quota `4` GPUs but currently has `0` GPUs, KAI can reclaim borrowed over-quota GPUs from the queue `reclaim-low` so `reclaim-high` can reach its guaranteed allocation.
+
+In both strategies, KAI preserves relative ordering. A queue that had the lowest saturation ratio in its level before reclaim should still have the lowest ratio afterward, and a queue that was below quota should remain below quota. The docs also note that Fair Share Reclaim is prioritized before Quota Reclaim.
+
+## In-Quota Protection Guarantee
+
+The diagram below maps to this lab's queue manifests. `reclaim-low` borrowed 4 extra GPUs while `reclaim-high` was idle. When `reclaim-high` submits demand, KAI can reclaim from `reclaim-low`'s over-quota zone. `reclaim-low`'s in-quota resources are never touched.
+
+<ReclaimAnimation />
+
+Display the reclaim scenario manifest. It creates one parent queue and two leaf queues with different priorities.
+
+```bash
+cat manifests/08-reclaim/reclaim-scenario.yaml
+```
+
+Apply the reclaim queues.
+
+```bash
+kubectl apply -f manifests/08-reclaim/reclaim-scenario.yaml
+```
+
+Inspect both queues and confirm their quotas and priorities.
+
+```bash
+kubectl get queues reclaim-high reclaim-low reclaim-parent
+```
+
+Describe the high-priority queue and look for `quota`, `limit`, and `priority`.
+
+```bash
+kubectl describe queue reclaim-high
+```
+
+Describe the low-priority queue and compare its policy.
+
+```bash
+kubectl describe queue reclaim-low
+```
+
+Search recent events for any reclaim-related scheduling decisions.
+
+```bash
+kubectl get events -A --sort-by=.lastTimestamp | grep -i reclaim | tail -20 || true
+```
+
+## Clean Up
+
+Delete the reclaim queues. They are cluster-scoped and appear in queue listings even when idle.
+
+```bash
+kubectl delete queue reclaim-high reclaim-low reclaim-parent --ignore-not-found
+```
+
+## What Just Happened
+
+You created the policy surface for reclaim. The key guarantee is that in-quota resources are always protected: if a queue is only using resources it deserves, other queues must wait, request a cluster scale-out, or find a different over-quota victim.
+
+## Sources
+
+- [Fairness — Reclaim Resources](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/fairness/README.md#reclaim-resources)
+- [Scheduling Deep Dive — Reclaim](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/scheduling-deep-dive/README.md)

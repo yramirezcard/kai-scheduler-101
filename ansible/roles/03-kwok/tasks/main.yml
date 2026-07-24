@@ -1,0 +1,22 @@
+---
+- name: Install KWOK controller and default stages
+  ansible.builtin.shell: |
+    set -euo pipefail
+    export KUBECONFIG="{{ repo_root }}/kubeconfig"
+    kubectl apply -f "https://github.com/kubernetes-sigs/kwok/releases/download/{{ kwok_version }}/kwok.yaml" || true
+    kubectl apply -f "https://github.com/kubernetes-sigs/kwok/releases/download/{{ kwok_version }}/stage-fast.yaml"
+    kubectl -n kube-system rollout status deployment/kwok-controller --timeout=180s
+  args:
+    executable: /bin/bash
+  become: false
+  changed_when: false
+
+- name: Create initial four simulated GPU nodes
+  ansible.builtin.shell: |
+    set -euo pipefail
+    export KUBECONFIG="{{ repo_root }}/kubeconfig"
+    kubectl apply -f "{{ repo_root }}/kwok/fake-gpu-nodes-4.yaml"
+  args:
+    executable: /bin/bash
+  become: false
+  changed_when: false

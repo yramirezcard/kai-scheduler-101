@@ -1,0 +1,150 @@
+@import "tailwindcss";
+
+/* ===== KAI Scheduler 101 theme ===== */
+:root {
+  --color-kai: #e83e8c;
+  --color-kai-bright: #ff78b7;
+  --color-kai-dim: #8f1d59;
+  --color-accent: #28d4c7;
+  --color-accent-bright: #5eeadd;
+
+  /* dark shell — lifted a few stops so it's not a black hole, panels separate clearly */
+  --color-bg: #111725;
+  --color-bg-2: #172033;
+  --color-panel: #1b2436;
+  --color-panel-2: #222d43;
+  --color-line: #2d3a52;
+  --color-line-2: #3b4a66;
+
+  --color-fg: #f2f5fb;
+  --color-fg-dim: #d0d8e6;
+  --color-fg-mut: #97a3ba;
+
+  /* fenced code blocks + terminal (dark values here; light overridden below) */
+  --color-code-bg: #0e1420;
+  --color-code-fg: #cdd7e5;
+  --color-term-bg: #0b101a;
+
+  /* inline `code` chips — theme-aware (separate from fenced blocks) */
+  --color-chip-bg: #232e44;
+  --color-chip-fg: #7fe6d8;
+
+  /* syntax-highlight tokens (dark) — adapt per theme so code reads on either background */
+  --hl-comment: #6b7c93;
+  --hl-keyword: #c792ea;
+  --hl-string:  #a9e46b;
+  --hl-number:  #f78c6c;
+  --hl-title:   #82aaff;
+  --hl-attr:    #ffcb6b;
+  --hl-built:   #7fdbff;
+
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Light mode — toggled via document.documentElement.dataset.theme = "light" */
+:root[data-theme="light"] {
+  --color-kai: #c51f73;
+  --color-kai-bright: #9f185d;
+  --color-kai-dim: #f4a7cb;
+  --color-accent: #0f9e8e;
+  --color-accent-bright: #0b8577;
+
+  --color-bg: #ffffff;
+  --color-bg-2: #eef3fb;
+  --color-panel: #f5f8fd;
+  --color-panel-2: #e7eef9;
+  --color-line: #d5deeb;
+  --color-line-2: #bfccdf;
+
+  --color-fg: #141a26;
+  --color-fg-dim: #3a4557;
+  --color-fg-mut: #647084;
+
+  /* light code blocks + terminal — dark text on a soft light panel (matches the page) */
+  --color-code-bg: #eef2f9;
+  --color-code-fg: #26303f;
+  --color-term-bg: #f3f6fc;
+
+  --color-chip-bg: #e6edf8;
+  --color-chip-fg: #0b6f63;
+
+  /* syntax-highlight tokens (light) */
+  --hl-comment: #6a737d;
+  --hl-keyword: #9c27b0;
+  --hl-string:  #0a7d3c;
+  --hl-number:  #b25000;
+  --hl-title:   #1a56c4;
+  --hl-attr:    #b25000;
+  --hl-built:   #0b6b86;
+}
+html { transition: background-color 0.15s ease; }
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-kai: var(--color-kai);
+  --font-mono: var(--font-mono);
+}
+
+html, body { background: var(--color-bg); color: var(--color-fg); }
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+  /* subtle depth — a couple of soft brand glows, fixed so they don't scroll */
+  background-image:
+    radial-gradient(48rem 24rem at 85% -8%, color-mix(in srgb, var(--color-kai) 10%, transparent), transparent 60%),
+    radial-gradient(42rem 22rem at -5% 4%, color-mix(in srgb, var(--color-accent) 8%, transparent), transparent 55%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+::selection { background: rgba(232, 62, 140, 0.30); }
+* { box-sizing: border-box; }
+
+/* focus visibility for keyboard users */
+:focus-visible { outline: 2px solid var(--color-kai); outline-offset: 2px; border-radius: 4px; }
+
+/* ---- prose (MDX content) ---- */
+.prose { color: var(--color-fg-dim); font-size: 1rem; line-height: 1.78; }
+.prose > * + * { margin-top: 18px; }
+.prose h1, .prose h2, .prose h3 { color: var(--color-fg); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; scroll-margin-top: 5rem; }
+.prose h2 { font-size: 1.5rem; margin-top: 44px; }
+.prose h3 { font-size: 1.18rem; margin-top: 30px; }
+.prose strong { color: var(--color-fg); font-weight: 650; }
+.prose a { color: var(--color-kai-bright); border-bottom: 1px solid color-mix(in srgb, var(--color-kai-bright) 40%, transparent); }
+.prose ul, .prose ol { padding-left: 1.3em; }
+.prose ul { list-style: disc; }
+.prose ol { list-style: decimal; }
+.prose li + li { margin-top: 6px; }
+/* inline `code` chips */
+.prose code { font-family: var(--font-mono); font-size: 0.86em; background: var(--color-chip-bg); padding: 0.12em 0.44em; border-radius: 5px; color: var(--color-chip-fg); border: 1px solid var(--color-line); }
+/* block code inside a fenced <pre> must NOT get the inline-chip box — an inline <code> with a
+   border spanning multiple lines draws a border per line fragment (the "boxed lines" bug). */
+.prose pre code { background: transparent; border: 0; padding: 0; border-radius: 0; color: inherit; font-size: inherit; }
+.prose hr { border: none; border-top: 1px solid var(--color-line); margin: 32px 0; }
+.prose table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.prose th, .prose td { border: 1px solid var(--color-line); padding: 8px 12px; text-align: left; }
+.prose th { background: var(--color-panel); color: var(--color-fg); }
+.prose blockquote { border-left: 3px solid var(--color-kai); background: var(--color-panel); padding: 10px 14px; border-radius: 0 8px 8px 0; color: var(--color-fg-mut); }
+
+/* keyboard keys */
+.prose kbd { font-family: var(--font-mono); font-size: 0.8em; background: var(--color-panel-2); border: 1px solid var(--color-line-2); border-bottom-width: 2px; border-radius: 5px; padding: 0.05em 0.4em; color: var(--color-fg); }
+
+/* ---- highlight.js token colors — theme-adaptive (no fixed light/dark hljs stylesheet) ---- */
+.hljs { color: var(--color-code-fg); background: transparent; }
+.hljs-comment, .hljs-quote { color: var(--hl-comment); font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-section, .hljs-link,
+.hljs-meta .hljs-keyword { color: var(--hl-keyword); }
+.hljs-string, .hljs-symbol, .hljs-bullet, .hljs-addition, .hljs-template-tag,
+.hljs-template-variable, .hljs-quote { color: var(--hl-string); }
+.hljs-number, .hljs-regexp, .hljs-deletion { color: var(--hl-number); }
+.hljs-title, .hljs-name, .hljs-selector-id, .hljs-selector-class, .hljs-type { color: var(--hl-title); }
+.hljs-attr, .hljs-attribute, .hljs-variable, .hljs-meta { color: var(--hl-attr); }
+.hljs-built_in, .hljs-builtin-name, .hljs-params { color: var(--hl-built); }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: 700; }
+
+/* ---- xterm tweaks ---- */
+.xterm { padding: 10px; }
+.xterm-viewport::-webkit-scrollbar { width: 8px; }
+.xterm-viewport::-webkit-scrollbar-thumb { background: var(--color-line-2); border-radius: 4px; }

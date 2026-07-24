@@ -1,0 +1,102 @@
+# Hierarchical PodGroups & SubGroups
+
+Some distributed systems have nested roles. A disaggregated serving stack might need a router, a prefill group, and a decode group before it can serve traffic. Within prefill and decode, there can also be leaders and workers that must be co-located for fast communication. A single flat `minMember` value is too blunt for that shape.
+
+KAI's hierarchical PodGroup design keeps the root all-or-nothing scheduling contract while adding smaller SubGroups inside it. That gives the scheduler more structure:
+
+- The root `PodGroup` represents the whole workload and points to a KAI queue.
+- `minSubGroup` on the root says how many direct child SubGroups must be satisfied before the workload is schedulable.
+- A mid-level SubGroup can also use `minSubGroup` to require its own children.
+- A leaf SubGroup uses `minMember` to say how many Pods in that role must fit together.
+- A Pod is assigned to a leaf SubGroup with the `kai.scheduler/subgroup-name` label.
+- Topology constraints can be applied at the root, mid-level, or leaf level so tightly coupled roles can be placed together without forcing the whole serving stack onto one node.
+
+Grove builds on the same motivation from the serving side. It provides Kubernetes CRDs for AI inference systems where roles such as router, prefill, decode, leader, and worker are declared as one managed object. Grove's README describes four core concepts: `PodClique` for a role-specific group of Pods, `PodCliqueScalingGroup` for cliques that scale and schedule together, `PodCliqueSet` as the top-level serving system, and `PodGang` as the scheduler-facing gang unit.
+
+This lab does not install the real Grove operator. Instead, it installs small lab-only CRDs so you can inspect Grove-shaped objects, then applies an example that mimics a controller translating a disaggregated serving topology into a KAI hierarchical PodGroup.
+
+<HierarchicalPodGroupAnimation />
+
+Display the lab-only Grove CRDs. These CRDs are intentionally tiny, but the kinds match the concepts you should recognize in a real Grove installation.
+
+```bash
+cat manifests/14-hierarchical-podgroups/01-grove-crds.yaml
+```
+
+Apply the Grove CRDs so Kubernetes can store the mock Grove resources used in this chapter.
+
+```bash
+kubectl apply -f manifests/14-hierarchical-podgroups/01-grove-crds.yaml
+```
+
+Inspect the CRDs that were registered. This confirms the API now knows about `PodCliqueSet`, `PodCliqueScalingGroup`, `PodClique`, and `PodGang`.
+
+```bash
+kubectl get crd podcliquesets.grove.io podcliquescalinggroups.grove.io podcliques.grove.io podgangs.grove.io
+```
+
+Display the disaggregated serving manifest. Notice that it includes both Grove-shaped objects and the KAI `PodGroup` that mimics the scheduler-facing output.
+
+```bash
+cat manifests/14-hierarchical-podgroups/02-grove-disaggregated-serving.yaml
+```
+
+Apply the serving example.
+
+```bash
+kubectl apply -f manifests/14-hierarchical-podgroups/02-grove-disaggregated-serving.yaml
+```
+
+Read the top-level Grove object. This is the user-facing serving topology: router, prefill, and decode are described as one system.
+
+```bash
+kubectl get podcliqueset -n kai-lab14 multinode-disaggregated -o yaml
+```
+
+Read the Grove PodGang. This is the scheduler-facing gang concept Grove uses to keep related role groups together.
+
+```bash
+kubectl get podgang -n kai-lab14 multinode-disaggregated -o yaml
+```
+
+Read the KAI PodGroup. This is the important bridge for this lab: the SubGroup tree expresses router, prefill leader/workers, and decode leader/workers with their own minimums.
+
+```bash
+kubectl get podgroup -n kai-lab14 grove-serving -o yaml
+```
+
+List all KAI PodGroups in the namespace.
+
+```bash
+kubectl get podgroups -n kai-lab14
+```
+
+## Clean Up
+
+Delete the namespace that contains the explicit PodGroup.
+
+```bash
+kubectl delete namespace kai-lab14 --ignore-not-found
+```
+
+Delete the cluster-scoped queue used by the PodGroup.
+
+```bash
+kubectl delete queue grove-demo --ignore-not-found
+```
+
+Delete the lab-only Grove CRDs. This removes the mock API types created for the lesson.
+
+```bash
+kubectl delete -f manifests/14-hierarchical-podgroups/01-grove-crds.yaml --ignore-not-found
+```
+
+## What Just Happened
+
+You represented a distributed serving topology without running the model itself. The Grove-shaped resources describe the application structure, while the KAI PodGroup describes the scheduling structure. The useful idea is not just "schedule seven Pods together"; it is "schedule the router, schedule prefill as a leader-worker group, schedule decode as a leader-worker group, and keep each tightly coupled group close enough for the serving path to work."
+
+## Sources
+
+- [Hierarchical PodGroup Design](https://github.com/kai-scheduler/KAI-Scheduler/tree/main/docs/developer/designs/hierarchical-podgroup)
+- [Grove README](https://github.com/ai-dynamo/grove#how-it-works)
+- [Grove Multinode Disaggregated Example](https://github.com/ai-dynamo/grove/blob/main/docs/assets/multinode-disaggregated.excalidraw.png)

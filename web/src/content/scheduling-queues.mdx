@@ -1,0 +1,83 @@
+# Scheduling Queues
+
+Queues are KAI's central resource management primitive. They are how you turn a raw GPU pool into policy: who is guaranteed capacity, who can burst, and which work should be considered when surplus exists.
+
+Only **leaf queues** are used by workloads. Parent queues organize and divide resources among children.
+
+<QueueBasicDiagram />
+
+## Queue Attributes: Quota and Limit
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| **Quota** | `integer` | Guaranteed GPU allocation for this queue. In-quota workloads are never preempted by cross-queue reclaim. Setting quota to `0` means the queue relies entirely on over-quota surplus. |
+| **Limit** | `integer` | Hard ceiling on total consumption, including over-quota burst. The scheduler will not place a workload that would push the queue above this value, even if cluster capacity is available. |
+
+The gap between quota and limit is the **burst zone**: resources the queue can use when surplus exists, but which can be reclaimed if another queue is below its fair-share. In-quota resources are always protected.
+
+In this lab, `lab-teams` owns `quota: 8, limit: 16`. The two leaf queues split that quota (`research: 4`, `platform: 4`) and may each burst up to their individual limit of `12` when surplus is available.
+
+Display the queue manifest before applying it. Focus on `quota`, `limit`, `priority`, and `overQuotaWeight`.
+
+```bash
+cat manifests/04-queues/research-platform-queues.yaml
+```
+
+Create the parent queue and two leaf queues.
+
+```bash
+kubectl apply -f manifests/04-queues/research-platform-queues.yaml
+```
+
+Display the workload manifest. Notice that both deployments use DRA claims, `schedulerName: kai-scheduler`, and a queue label.
+
+```bash
+cat manifests/04-queues/team-dra-workloads.yaml
+```
+
+Submit the research and platform workloads.
+
+```bash
+kubectl apply -f manifests/04-queues/team-dra-workloads.yaml
+```
+
+List queues to confirm the hierarchy exists.
+
+```bash
+kubectl get queues
+```
+
+List the submitted Pods and include their queue label. This is how you verify the workload-to-queue assignment.
+
+```bash
+kubectl get pods -n kai-lab04 -L kai.scheduler/queue -o wide
+```
+
+Describe one queue to see its policy and status.
+
+```bash
+kubectl describe queue research
+```
+
+## Clean Up
+
+Delete the namespace-scoped workloads first. This releases any DRA claims and simulated GPU demand from `kai-lab04`.
+
+```bash
+kubectl delete -f manifests/04-queues/team-dra-workloads.yaml --ignore-not-found
+```
+
+Delete the cluster-scoped queues after workloads are gone. Queues are not namespaced, so this cleanup does not use `-n`.
+
+```bash
+kubectl delete queue research platform lab-teams --ignore-not-found
+```
+
+## What Just Happened
+
+You created one parent queue and two leaf queues. The workloads did not request a queue through a command-line flag; they used the `kai.scheduler/queue` label, which keeps scheduling policy inside the Kubernetes object.
+
+## Sources
+
+- [Scheduling Queues](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/queues/README.md)
+- [KAI Quick Start](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/quickstart/README.md)

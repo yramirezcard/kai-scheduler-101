@@ -1,0 +1,44 @@
+# Ecosystem Integrations
+
+Most users do not hand-author every Pod. They submit Ray clusters, Kubeflow training jobs, Spark applications, JobSets, or serving stacks. KAI integrates by scheduling the Pods and PodGroups those controllers create.
+
+The common integration contract is simple:
+
+- generated Pods set `schedulerName: kai-scheduler`;
+- generated workload metadata carries `kai.scheduler/queue`;
+- distributed workloads get PodGroups or subgroup metadata;
+- GPU workloads use DRA claims in this lab.
+
+Display the KubeRay-style snippet.
+
+```bash
+cat manifests/23-integrations/kuberay-kai-snippet.yaml
+```
+
+Validate the snippet client-side. This does not require the KubeRay CRD to exist on the cluster.
+
+```bash
+kubectl apply --dry-run=client -f manifests/23-integrations/kuberay-kai-snippet.yaml
+```
+
+Search the snippet for KAI queue labels.
+
+```bash
+grep -n 'kai.scheduler/queue' manifests/23-integrations/kuberay-kai-snippet.yaml
+```
+
+Search the snippet for DRA claim usage.
+
+```bash
+grep -n -E 'resourceClaims|claims:' manifests/23-integrations/kuberay-kai-snippet.yaml
+```
+
+## What Just Happened
+
+You inspected KAI from the perspective of another controller. Integrations usually do not need special magic; they need to generate the same scheduling metadata you used manually throughout the lab.
+
+## Sources
+
+- [Batch Scheduling](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/batch/README.md)
+- [Dynamic Resource Allocation](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/dra/README.md)
+- [KubeRay](https://github.com/ray-project/kuberay)

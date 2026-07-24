@@ -1,0 +1,48 @@
+# KAI Scheduler 101 lab shell, sourced by the in-browser terminal.
+export KUBECONFIG="${KUBECONFIG:-$LAB_CWD/kubeconfig}"
+export PATH="$PATH:/usr/local/bin:/usr/bin"
+
+[ -f "$LAB_CWD/.env" ] && { set -a; . "$LAB_CWD/.env" 2>/dev/null; set +a; }
+
+alias k='kubectl'
+alias kg='kubectl get'
+alias kd='kubectl describe'
+alias kaf='kubectl apply -f'
+alias kdel='kubectl delete'
+alias kgp='kubectl get pods'
+alias kgpa='kubectl get pods -A'
+
+if command -v kubectl >/dev/null 2>&1; then
+  source <(kubectl completion bash 2>/dev/null) 2>/dev/null || true
+  complete -o default -F __start_kubectl k 2>/dev/null || true
+fi
+
+kai101-reset() {
+  echo "Resetting KAI lab workload objects..."
+  kubectl delete ns kai-lab kai-lab03 kai-lab04 kai-lab06 kai-lab07 kai-lab11 kai-lab12 kai-lab13 kai-lab14 kai-lab15 kai-lab18 kai-lab19 kai-lab20 kai-lab22 kai-lab23 --ignore-not-found >/dev/null 2>&1
+  kubectl delete queue lab-teams research platform ai-org foundation-models applied-ai fm-training fm-evaluation \
+    surplus-parent vision-team llm-team data-processing reclaim-parent reclaim-high reclaim-low \
+    preemption-demo gang-demo elastic-demo grove-demo topology-demo --ignore-not-found >/dev/null 2>&1
+  kubectl delete schedulingshard time-fairshare-demo spread-demo binpack-demo h100-shard --ignore-not-found >/dev/null 2>&1
+  kubectl delete topology lab-topology --ignore-not-found >/dev/null 2>&1
+  kubectl delete node kwok-gpu-05 kwok-gpu-06 kwok-gpu-07 kwok-gpu-08 kwok-gpu-09 kwok-gpu-10 kwok-gpu-11 kwok-gpu-12 \
+    kwok-gpu-13 kwok-gpu-14 kwok-gpu-15 kwok-gpu-16 kwok-gpu-17 kwok-gpu-18 kwok-gpu-19 kwok-gpu-20 \
+    kwok-gpu-21 kwok-gpu-22 kwok-gpu-23 kwok-gpu-24 --ignore-not-found >/dev/null 2>&1
+  kubectl delete -f manifests/21-observability/kai-service-monitor.yaml --ignore-not-found >/dev/null 2>&1
+  helm uninstall kube-prometheus-stack -n monitoring --ignore-not-found >/dev/null 2>&1 || true
+  kubectl delete ns monitoring --ignore-not-found >/dev/null 2>&1
+  kubectl apply -f kwok/fake-gpu-nodes-4.yaml >/dev/null 2>&1 || true
+  echo "KAI lab reset complete."
+}
+
+PS1='\[\e[1;35m\]kai-lab\[\e[0m\]:\[\e[1;34m\]\w\[\e[0m\]$ '
+
+echo -e "\e[1;35mKAI Scheduler 101 lab shell\e[0m"
+if kubectl get nodes >/dev/null 2>&1; then
+  echo -e "  \e[2mcluster:\e[0m connected - run \e[1;33mkubectl get nodes\e[0m"
+else
+  echo -e "  \e[2mcluster:\e[0m \e[33mnot reachable yet\e[0m"
+fi
+echo -e "  \e[2mtip:\e[0m 'k' is an alias for kubectl; manifests are under ./manifests"
+echo -e "  \e[2mreset:\e[0m run \e[1;33mkai101-reset\e[0m to clean up lab objects"
+echo

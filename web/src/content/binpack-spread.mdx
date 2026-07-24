@@ -1,0 +1,140 @@
+# Bin-Packing vs Spread & Consolidation
+
+Placement strategy changes how KAI chooses among feasible nodes. Spread distributes work, which can improve fault tolerance and reduce hotspots. Bin-pack fills fewer nodes first, which can reduce fragmentation and leave larger empty regions for future gangs.
+
+Consolidation uses the same intuition after work is already running. If workloads are scattered in a way that leaves the cluster fragmented, the scheduler can repack movable workloads to improve utilization, but only when the move can be completed safely. That is why Consolidate appears early in the scheduling cycle: it tries to improve placement before disruptive actions such as reclaim or preemption are needed.
+
+KAI configures placement at the `SchedulingShard` level. The official shard configuration supports a `placementStrategy` map per resource, for example `cpu: spread`, `gpu: spread`, `cpu: binpack`, or `gpu: binpack`. This lab uses CPU-only KWOK workloads so the placement effect is visible without relying on GPU ResourceSlices.
+
+<PlacementAnimation />
+
+Display the fake node pools. This creates three nodes for the spread shard and three nodes for the bin-pack shard.
+
+```bash
+cat manifests/16-placement/node-pools.yaml
+```
+
+Apply the fake node pools.
+
+```bash
+kubectl apply -f manifests/16-placement/node-pools.yaml
+```
+
+Display the spread shard example. The important field is `spec.placementStrategy.cpu: spread`.
+
+```bash
+cat manifests/16-placement/scheduling-shard-spread.yaml
+```
+
+Apply the spread example.
+
+```bash
+kubectl apply -f manifests/16-placement/scheduling-shard-spread.yaml
+```
+
+Display the bin-pack shard example. The important field is `spec.placementStrategy.cpu: binpack`.
+
+```bash
+cat manifests/16-placement/scheduling-shard-binpack.yaml
+```
+
+Apply the bin-pack example.
+
+```bash
+kubectl apply -f manifests/16-placement/scheduling-shard-binpack.yaml
+```
+
+List the two node pools. The shard partition label is what separates the scheduler domains.
+
+```bash
+kubectl get nodes -l kai.scheduler/node-pool
+```
+
+List the placement-related shards.
+
+```bash
+kubectl get schedulingshard spread-demo binpack-demo
+```
+
+Display the spread workload. Its queue, Job, and Pods all carry `kai.scheduler/node-pool: placement-spread`, so they belong to the spread shard.
+
+```bash
+cat manifests/16-placement/spread-workload.yaml
+```
+
+Apply the spread workload.
+
+```bash
+kubectl apply -f manifests/16-placement/spread-workload.yaml
+```
+
+List the spread Pods with their nodes. With spread scoring, the Pods should be distributed across the spread node pool as evenly as feasible.
+
+```bash
+kubectl get pods -n kai-lab16-spread -o wide
+```
+
+Display the bin-pack workload. It has the same shape as the spread workload, but targets the bin-pack shard.
+
+```bash
+cat manifests/16-placement/binpack-workload.yaml
+```
+
+Apply the bin-pack workload.
+
+```bash
+kubectl apply -f manifests/16-placement/binpack-workload.yaml
+```
+
+List the bin-pack Pods with their nodes. With bin-pack scoring, the Pods should concentrate on fewer nodes before filling the rest of the pool.
+
+```bash
+kubectl get pods -n kai-lab16-binpack -o wide
+```
+
+Inspect the bin-pack shard to connect the observed placement back to the scheduler configuration.
+
+```bash
+kubectl get schedulingshard binpack-demo -o yaml
+```
+
+## Clean Up
+
+Delete the placement example shards so they do not remain in the scheduler configuration.
+
+```bash
+kubectl delete schedulingshard spread-demo binpack-demo --ignore-not-found
+```
+
+Delete the spread namespace.
+
+```bash
+kubectl delete namespace kai-lab16-spread --ignore-not-found
+```
+
+Delete the bin-pack namespace.
+
+```bash
+kubectl delete namespace kai-lab16-binpack --ignore-not-found
+```
+
+Delete the queues created for the two placement strategies.
+
+```bash
+kubectl delete queue spread-demo binpack-demo --ignore-not-found
+```
+
+Delete the fake placement nodes.
+
+```bash
+kubectl delete node placement-spread-01 placement-spread-02 placement-spread-03 placement-binpack-01 placement-binpack-02 placement-binpack-03 --ignore-not-found
+```
+
+## What Just Happened
+
+You created two shard-local placement policies and sent equivalent workloads to each one. Spread optimized for distribution. Bin-pack optimized for consolidation by filling fewer nodes first. The right choice depends on the workload: interactive services often prefer spread for resilience, while gang-heavy training clusters often benefit from bin-pack because it preserves larger contiguous free regions.
+
+## Sources
+
+- [Scheduling Shards](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/operator/scheduling-shards.md)
+- [Scheduling Deep Dive](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/scheduling-deep-dive/README.md)

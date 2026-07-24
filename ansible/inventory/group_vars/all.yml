@@ -1,0 +1,6 @@
+cluster_name: "{{ lookup('env', 'CLUSTER_NAME') | default('kai-scheduler-101', true) }}"
+kubeconfig_path: "{{ lookup('env', 'PWD') }}/kubeconfig"
+kind_node_image: "{{ lookup('env', 'KIND_NODE_IMAGE') | default('kindest/node:v1.34.0', true) }}"
+kai_version: "{{ lookup('env', 'KAI_VERSION') | default('v0.16.5', true) }}"
+fake_gpu_operator_version: "{{ lookup('env', 'FAKE_GPU_OPERATOR_VERSION') | default('0.2.0', true) }}"
+kwok_version: "{{ lookup('env', 'KWOK_VERSION') | default('v0.7.0', true) }}"

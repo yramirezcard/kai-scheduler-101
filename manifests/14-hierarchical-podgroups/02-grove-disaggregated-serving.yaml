@@ -1,0 +1,126 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kai-lab14
+  labels:
+    kai-scheduler-101/chapter: "14"
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: grove-demo
+  labels:
+    kai-scheduler-101/chapter: "14"
+spec:
+  resources:
+    gpu: { quota: 6, limit: 8, overQuotaWeight: 1 }
+---
+apiVersion: grove.io/v1alpha1
+kind: PodCliqueSet
+metadata:
+  name: multinode-disaggregated
+  namespace: kai-lab14
+  labels:
+    kai-scheduler-101/chapter: "14"
+spec:
+  schedulerName: kai-scheduler
+  queue: grove-demo
+  topology:
+    preferredDomain: node
+  cliques:
+    - name: router
+      replicas: 1
+      minAvailable: 1
+    - name: prefill
+      scalingGroup: prefill-replica
+      role: leader-worker
+    - name: decode
+      scalingGroup: decode-replica
+      role: leader-worker
+---
+apiVersion: grove.io/v1alpha1
+kind: PodCliqueScalingGroup
+metadata:
+  name: prefill-replica
+  namespace: kai-lab14
+  labels:
+    kai-scheduler-101/chapter: "14"
+spec:
+  replicas: 1
+  minAvailable: 1
+  podCliques:
+    - name: prefill-leader
+      minAvailable: 1
+    - name: prefill-workers
+      minAvailable: 2
+  placement:
+    requiredDomain: node
+---
+apiVersion: grove.io/v1alpha1
+kind: PodCliqueScalingGroup
+metadata:
+  name: decode-replica
+  namespace: kai-lab14
+  labels:
+    kai-scheduler-101/chapter: "14"
+spec:
+  replicas: 1
+  minAvailable: 1
+  podCliques:
+    - name: decode-leader
+      minAvailable: 1
+    - name: decode-workers
+      minAvailable: 2
+  placement:
+    requiredDomain: node
+---
+apiVersion: grove.io/v1alpha1
+kind: PodGang
+metadata:
+  name: multinode-disaggregated
+  namespace: kai-lab14
+  labels:
+    kai-scheduler-101/chapter: "14"
+spec:
+  minAvailable: 5
+  cliques:
+    - name: router
+      minAvailable: 1
+    - name: prefill-leader
+      minAvailable: 1
+    - name: prefill-workers
+      minAvailable: 2
+    - name: decode-leader
+      minAvailable: 1
+    - name: decode-workers
+      minAvailable: 2
+---
+apiVersion: scheduling.run.ai/v2
+kind: PodGroup
+metadata:
+  name: grove-serving
+  namespace: kai-lab14
+  labels:
+    kai-scheduler-101/chapter: "14"
+spec:
+  queue: grove-demo
+  minSubGroup: 3
+  subGroups:
+    - name: router
+      minMember: 1
+    - name: prefill
+      minSubGroup: 2
+    - name: prefill-leader
+      parent: prefill
+      minMember: 1
+    - name: prefill-workers
+      parent: prefill
+      minMember: 2
+    - name: decode
+      minSubGroup: 2
+    - name: decode-leader
+      parent: decode
+      minMember: 1
+    - name: decode-workers
+      parent: decode
+      minMember: 2

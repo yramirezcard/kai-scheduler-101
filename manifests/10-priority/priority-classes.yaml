@@ -1,0 +1,35 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: train
+  labels: { kai-scheduler-101/chapter: "10" }
+value: 50
+globalDefault: false
+description: "Preemptible training workload."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: build-preemptible
+  labels: { kai-scheduler-101/chapter: "10" }
+value: 75
+globalDefault: false
+description: "Preemptible build workload."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: build
+  labels: { kai-scheduler-101/chapter: "10" }
+value: 100
+globalDefault: false
+description: "Non-preemptible build workload."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: inference
+  labels: { kai-scheduler-101/chapter: "10" }
+value: 125
+globalDefault: false
+description: "Non-preemptible inference workload."

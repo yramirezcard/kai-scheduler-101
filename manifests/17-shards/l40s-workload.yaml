@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kai-lab17-l40s
+  labels:
+    kai-scheduler-101/chapter: "17"
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: l40s-inference
+  labels:
+    kai-scheduler-101/chapter: "17"
+    nvidia.com/gpu.machine: NVIDIA-L40S
+spec:
+  resources:
+    cpu: { quota: 8, limit: 16, overQuotaWeight: 1 }
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: l40s-inference
+  namespace: kai-lab17-l40s
+  labels:
+    kai-scheduler-101/chapter: "17"
+    nvidia.com/gpu.machine: NVIDIA-L40S
+spec:
+  parallelism: 2
+  completions: 2
+  template:
+    metadata:
+      labels:
+        kai.scheduler/queue: l40s-inference
+        nvidia.com/gpu.machine: NVIDIA-L40S
+        kai-scheduler-101/chapter: "17"
+    spec:
+      schedulerName: kai-scheduler
+      restartPolicy: Never
+      tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+      containers:
+        - name: worker
+          image: ubuntu:22.04
+          command: ["bash", "-lc"]
+          args: ["echo l40s shard worker; sleep 3600"]
+          resources:
+            requests:
+              cpu: "2"
+              memory: 256Mi
+            limits:
+              cpu: "2"
+              memory: 256Mi

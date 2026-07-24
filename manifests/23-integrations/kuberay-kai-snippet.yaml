@@ -1,0 +1,32 @@
+apiVersion: ray.io/v1
+kind: RayCluster
+metadata:
+  name: ray-kai-example
+  namespace: kai-lab23
+  labels:
+    kai.scheduler/queue: research
+    kai-scheduler-101/chapter: "23"
+spec:
+  rayVersion: "2.46.0"
+  headGroupSpec:
+    template:
+      spec:
+        schedulerName: kai-scheduler
+        containers:
+          - name: ray-head
+            image: rayproject/ray:2.46.0
+  workerGroupSpecs:
+    - groupName: gpu-workers
+      replicas: 1
+      template:
+        spec:
+          schedulerName: kai-scheduler
+          resourceClaims:
+            - name: gpu
+              resourceClaimTemplateName: gpu-one
+          containers:
+            - name: ray-worker
+              image: rayproject/ray:2.46.0
+              resources:
+                claims:
+                  - name: gpu

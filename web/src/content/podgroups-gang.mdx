@@ -1,0 +1,64 @@
+# PodGroups & Gang Scheduling
+
+Distributed AI workloads often need several Pods to start together. If one worker starts without the others, it may waste capacity, hang on rendezvous, or fail training. Gang scheduling gives KAI a larger scheduling unit than a single Pod.
+
+<GangSchedulingAnimation />
+
+Display the gang Job manifest. The annotation `kai.scheduler/batch-min-member: "4"` tells KAI the minimum number of Pods that must be schedulable together.
+
+```bash
+cat manifests/12-gang/gang-job.yaml
+```
+
+Apply the gang workload.
+
+```bash
+kubectl apply -f manifests/12-gang/gang-job.yaml
+```
+
+List the Job.
+
+```bash
+kubectl get jobs -n kai-lab12
+```
+
+List PodGroups created for the namespace. KAI's podgrouper turns workload ownership into scheduling groups.
+
+```bash
+kubectl get podgroups -n kai-lab12
+```
+
+List Pods and node placement.
+
+```bash
+kubectl get pods -n kai-lab12 -o wide
+```
+
+Read recent events if the gang is pending. Pending can be correct when `minMember` cannot be satisfied.
+
+```bash
+kubectl get events -n kai-lab12 --sort-by=.lastTimestamp | tail -30
+```
+
+## Clean Up
+
+Delete the gang namespace. This removes the Job, Pods, ResourceClaims, and generated PodGroups from the scenario.
+
+```bash
+kubectl delete namespace kai-lab12 --ignore-not-found
+```
+
+Delete the cluster-scoped gang queue after the namespace is gone.
+
+```bash
+kubectl delete queue gang-demo --ignore-not-found
+```
+
+## What Just Happened
+
+You moved from Pod scheduling to group scheduling. KAI can now decide "start enough workers together" instead of allowing one worker to occupy a GPU while the rest of the job waits.
+
+## Sources
+
+- [Batch Scheduling](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/batch/README.md)
+- [Scheduling Deep Dive](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/scheduling-deep-dive/README.md)

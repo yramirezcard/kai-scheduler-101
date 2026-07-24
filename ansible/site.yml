@@ -1,0 +1,12 @@
+---
+- name: KAI Scheduler 101 Brev bootstrap
+  hosts: local
+  become: true
+  vars:
+    repo_root: "{{ playbook_dir }}/.."
+  roles:
+    - { role: "00-host-preparation", tags: [host-preparation] }
+    - { role: "01-kind", tags: [kind, kubernetes] }
+    - { role: "02-k8s-tooling", tags: [tooling, kubectl, helm] }
+    - { role: "03-kwok", tags: [kwok] }
+    - { role: "04-fake-gpu-operator", tags: [fake-gpu-operator] }

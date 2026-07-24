@@ -1,0 +1,50 @@
+# The KAI Architecture
+
+KAI is a small scheduling platform inside Kubernetes. The scheduler makes placement decisions, but several controllers prepare, validate, and execute those decisions.
+
+<KaiArchitecture />
+
+The major components are:
+
+- **operator**: reconciles the KAI `Config` and `SchedulingShard` resources into deployments and runtime configuration.
+- **scheduler**: runs the scheduling cycle, evaluates queues and PodGroups, and selects nodes.
+- **binder**: executes the scheduler decision and handles DRA allocation details through `BindRequest`.
+- **podgrouper**: builds PodGroups from Pods, Jobs, JobSets, Kubeflow, Ray, Spark, and similar workload owners.
+- **admission webhooks**: validate and default KAI-owned APIs and workload metadata.
+- **queuecontroller**: maintains queue hierarchy and resource policy.
+- **podgroupcontroller**: tracks gang and subgroup state.
+- **resourcereservation**: supports accounting for GPU sharing.
+- **nodescaleadjuster**: connects scheduler demand to scale-out integrations.
+
+List deployments to see which controllers Helm installed.
+
+```bash
+kubectl get deploy -n kai-scheduler
+```
+
+List Pods with node placement. This helps you connect deployments to runtime Pods.
+
+```bash
+kubectl get pods -n kai-scheduler -o wide
+```
+
+Show KAI CRDs by topic. CRDs are the contracts between the user, controllers, and scheduler.
+
+```bash
+kubectl get crds | grep -E 'queue|podgroup|bindrequest|topology|schedulingshard|config'
+```
+
+Look for scheduler logs. They are the most direct view into decisions once you are debugging a real cluster.
+
+```bash
+kubectl logs -n kai-scheduler deploy/kai-scheduler --tail=80
+```
+
+## What Just Happened
+
+You mapped KAI from Kubernetes objects back to scheduler responsibilities. This matters because later failures are easier to debug when you can decide whether the problem is queue policy, PodGroup generation, scheduler selection, or binder execution.
+
+## Sources
+
+- [KAI docs](https://github.com/kai-scheduler/KAI-Scheduler/tree/main/docs)
+- [DRA and Binder](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/dra/README.md)

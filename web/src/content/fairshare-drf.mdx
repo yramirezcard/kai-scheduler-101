@@ -1,0 +1,74 @@
+# Fair-Share & DRF
+
+Fair-share answers this question: given requested resources, deserved quota, priority, and weight, which queue should receive the next available resource? KAI recalculates fair-share during scheduling cycles and tries to keep actual usage close to the computed share.
+
+`Dominant Resource Fairness`, usually shortened to **DRF**, extends that idea when queues consume more than one resource type. A queue's **dominant resource** is the resource where its usage is largest relative to the total available pool. For example, one team may look small by GPU count but large by memory consumption, while another team may be GPU-heavy but modest on CPU and memory.
+
+This matters because fairness is not only about counting GPUs. A mixed cluster can become unfair when one queue consumes a large fraction of memory or CPU even if it is not using the most GPUs. DRF gives KAI a way to compare unlike resource demands with one fairness score.
+
+<FairShareAnimation />
+
+Display the DRF queue policy. This repeats the same queue names from the previous chapter so the resource mix, not the queue naming, is the only new idea.
+
+```bash
+cat manifests/07-fairshare/drf-queues.yaml
+```
+
+Apply the queue policy.
+
+```bash
+kubectl apply -f manifests/07-fairshare/drf-queues.yaml
+```
+
+Display the workload manifest before applying it. Notice the shape of each queue's demand: Vision asks for many GPU claims with small CPU and memory requests, LLM asks for fewer GPU claims but much larger memory requests, and Data Processing asks for no GPU but high CPU.
+
+```bash
+cat manifests/07-fairshare/drf-workloads.yaml
+```
+
+Submit the multi-resource workload mix.
+
+```bash
+kubectl apply -f manifests/07-fairshare/drf-workloads.yaml
+```
+
+Compare the declared requests for each deployment. This is the most important observation in the lab: a queue can be dominant on memory or CPU even when it is not asking for the most GPUs.
+
+```bash
+kubectl get deploy -n kai-lab07 -o custom-columns='NAME:.metadata.name,QUEUE:.spec.template.metadata.labels.kai\.scheduler/queue,CPU:.spec.template.spec.containers[*].resources.requests.cpu,MEMORY:.spec.template.spec.containers[*].resources.requests.memory,GPU_CLAIMS:.spec.template.spec.resourceClaims[*].name'
+```
+
+List the resulting Pods. Pending Pods are possible when the combined GPU, CPU, or memory requests exceed the simulated cluster shape.
+
+```bash
+kubectl get pods -n kai-lab07 -o wide
+```
+
+Read recent events for scheduling explanations.
+
+```bash
+kubectl get events -n kai-lab07 --sort-by=.lastTimestamp | tail -30
+```
+
+## Clean Up
+
+Delete the DRF workloads first. They create Pods and DRA claims that can consume simulated resources.
+
+```bash
+kubectl delete -f manifests/07-fairshare/drf-workloads.yaml --ignore-not-found
+```
+
+Delete the DRF queue objects after the workloads are gone.
+
+```bash
+kubectl delete -f manifests/07-fairshare/drf-queues.yaml --ignore-not-found
+```
+
+## What Just Happened
+
+You separated requested demand from deserved quota, then added multi-resource pressure to the model with real Kubernetes objects. That is the mental move DRF requires: a busy queue is not automatically unfair, but a queue above its computed dominant share may become less eligible for additional resources when another queue is below share.
+
+## Sources
+
+- [Fairness](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/fairness/README.md)
+- [Scheduling Deep Dive](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/scheduling-deep-dive/README.md)

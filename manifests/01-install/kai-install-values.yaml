@@ -1,0 +1,11 @@
+global:
+  gpuSharing: true
+  clusterAutoscaling: false
+binder:
+  resourceReservationPodResources:
+    requests:
+      cpu: 1m
+      memory: 10Mi
+    limits:
+      cpu: 50m
+      memory: 100Mi

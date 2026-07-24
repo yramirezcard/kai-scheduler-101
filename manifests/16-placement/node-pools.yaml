@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: placement-spread-01, labels: { type: kwok, kai.scheduler/node-pool: placement-spread, kubernetes.io/hostname: placement-spread-01 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "8", memory: 64Gi, pods: "110" }, allocatable: { cpu: "8", memory: 64Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: placement-spread-02, labels: { type: kwok, kai.scheduler/node-pool: placement-spread, kubernetes.io/hostname: placement-spread-02 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "8", memory: 64Gi, pods: "110" }, allocatable: { cpu: "8", memory: 64Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: placement-spread-03, labels: { type: kwok, kai.scheduler/node-pool: placement-spread, kubernetes.io/hostname: placement-spread-03 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "8", memory: 64Gi, pods: "110" }, allocatable: { cpu: "8", memory: 64Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: placement-binpack-01, labels: { type: kwok, kai.scheduler/node-pool: placement-binpack, kubernetes.io/hostname: placement-binpack-01 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "8", memory: 64Gi, pods: "110" }, allocatable: { cpu: "8", memory: 64Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: placement-binpack-02, labels: { type: kwok, kai.scheduler/node-pool: placement-binpack, kubernetes.io/hostname: placement-binpack-02 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "8", memory: 64Gi, pods: "110" }, allocatable: { cpu: "8", memory: 64Gi, pods: "110" } }
+  - apiVersion: v1
+    kind: Node
+    metadata: { name: placement-binpack-03, labels: { type: kwok, kai.scheduler/node-pool: placement-binpack, kubernetes.io/hostname: placement-binpack-03 } }
+    spec: { taints: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ] }
+    status: { capacity: { cpu: "8", memory: 64Gi, pods: "110" }, allocatable: { cpu: "8", memory: 64Gi, pods: "110" } }

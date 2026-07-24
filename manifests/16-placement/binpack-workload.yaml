@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kai-lab16-binpack
+  labels:
+    kai-scheduler-101/chapter: "16"
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: binpack-demo
+  labels:
+    kai-scheduler-101/chapter: "16"
+    kai.scheduler/node-pool: placement-binpack
+spec:
+  resources:
+    cpu: { quota: 12, limit: 24, overQuotaWeight: 1 }
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: binpack-workers
+  namespace: kai-lab16-binpack
+  labels:
+    kai-scheduler-101/chapter: "16"
+    kai.scheduler/node-pool: placement-binpack
+spec:
+  parallelism: 6
+  completions: 6
+  template:
+    metadata:
+      labels:
+        kai.scheduler/queue: binpack-demo
+        kai.scheduler/node-pool: placement-binpack
+        kai-scheduler-101/chapter: "16"
+    spec:
+      schedulerName: kai-scheduler
+      restartPolicy: Never
+      tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+      containers:
+        - name: worker
+          image: ubuntu:22.04
+          command: ["bash", "-lc"]
+          args: ["echo binpack worker; sleep 3600"]
+          resources:
+            requests:
+              cpu: "1"
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 128Mi

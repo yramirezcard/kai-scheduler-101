@@ -1,0 +1,89 @@
+# Queue Priority & Over-Quota Distribution
+
+KAI's fair-share algorithm starts by separating **deserved quota** from **over-quota demand**. A queue is treated as **in-quota** while its allocated resources are below its configured quota. In that phase, queue priority is intentionally ignored: every queue should be able to receive the resources it deserves.
+
+After deserved quota is satisfied, any remaining capacity becomes **surplus**. Surplus is where queue priority and `overQuotaWeight` matter. The scheduler considers queues by **over-quota priority** first. If several queues are at the same priority tier, `overQuotaWeight` determines the proportional split within that tier.
+
+The example below uses three queues and a 10-GPU resource pool:
+
+- **Vision Team**: priority `2`, quota `2`, weight `2`
+- **LLM Team**: priority `2`, quota `2`, weight `1`
+- **Data Processing**: priority `1`, quota `3`, weight `1`
+
+The first seven GPUs satisfy quota: 2 for Vision, 2 for LLM, and 3 for Data Processing. The remaining three GPUs are surplus. Vision and LLM share the highest priority tier, so the surplus is split by weight `2:1`: Vision receives two surplus GPUs and LLM receives one.
+
+<OverQuotaAnimation />
+
+## Queue Attributes: Over-Quota Priority and Over-Quota Weight
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| **Over-Quota Priority** | `integer` | Determines which queue receives surplus GPUs first. Higher value wins. Applied only after all queues have filled their guaranteed quota. Has no effect on in-quota workloads. |
+| **Over-Quota Weight** | `float` | Proportional share of surplus among queues that share the same over-quota priority. A queue with weight `3` receives three times as much surplus as a queue with weight `1` at the same priority level. |
+
+These two work in sequence: **priority** establishes ordering, **weight** distributes proportionally within a tier.
+
+Display the queue policy for the 10-GPU example.
+
+```bash
+cat manifests/06-overquota/priority-weighted-queues.yaml
+```
+
+Apply the queues.
+
+```bash
+kubectl apply -f manifests/06-overquota/priority-weighted-queues.yaml
+```
+
+Display the over-quota demand manifest. The three deployments use the same queue names as the diagram: `vision-team`, `llm-team`, and `data-processing`. Each deployment asks for more replicas than its guaranteed quota can cover, which creates visible over-quota pressure.
+
+```bash
+cat manifests/06-overquota/overquota-workloads.yaml
+```
+
+Submit the demand.
+
+```bash
+kubectl apply -f manifests/06-overquota/overquota-workloads.yaml
+```
+
+List queue objects to inspect the active policy.
+
+```bash
+kubectl get queues
+```
+
+List workload placement and pending Pods. Pending Pods are expected when demand exceeds policy and capacity.
+
+```bash
+kubectl get pods -n kai-lab06 -o wide
+```
+
+Read recent events. Events explain whether a Pod is waiting because of quota, fit, or another scheduling decision.
+
+```bash
+kubectl get events -n kai-lab06 --sort-by=.lastTimestamp | tail -30
+```
+
+## Clean Up
+
+Delete the over-quota workloads first. They intentionally consume simulated GPUs and can distort later labs if left running.
+
+```bash
+kubectl delete -f manifests/06-overquota/overquota-workloads.yaml --ignore-not-found
+```
+
+Delete the surplus queues after the workloads are gone.
+
+```bash
+kubectl delete queue vision-team llm-team data-processing surplus-parent --ignore-not-found
+```
+
+## What Just Happened
+
+You created demand beyond quota. KAI protects guaranteed quota first, then uses priority and weight to decide surplus. This distinction is the reason high-priority queues do not steal another queue's deserved quota just because their priority is higher.
+
+## Sources
+
+- [Fair Share Algorithm](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/fairness/README.md#fair-share-algorithm)
+- [Queue Priority Diagram](https://raw.githubusercontent.com/kai-scheduler/KAI-Scheduler/main/docs/scheduling-deep-dive/diagrams/queue-priority-light.svg)

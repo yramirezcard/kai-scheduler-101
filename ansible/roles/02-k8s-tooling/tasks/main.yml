@@ -1,0 +1,27 @@
+---
+- name: Install kubectl and helm
+  ansible.builtin.shell: |
+    set -euo pipefail
+    arch="$(uname -m)"
+    case "$arch" in x86_64|amd64) goarch=amd64 ;; aarch64|arm64) goarch=arm64 ;; *) goarch=amd64 ;; esac
+    if ! command -v kubectl >/dev/null 2>&1; then
+      kver="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"
+      curl -fsSLo /tmp/kubectl "https://dl.k8s.io/release/${kver}/bin/linux/${goarch}/kubectl"
+      install -m 0755 /tmp/kubectl /usr/local/bin/kubectl
+    fi
+    command -v helm >/dev/null 2>&1 || curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Wait for Kubernetes API
+  ansible.builtin.shell: |
+    KUBECONFIG="{{ repo_root }}/kubeconfig" kubectl get --raw=/readyz
+  args:
+    executable: /bin/bash
+  register: readyz
+  retries: 30
+  delay: 5
+  until: readyz.rc == 0
+  become: false
+  changed_when: false

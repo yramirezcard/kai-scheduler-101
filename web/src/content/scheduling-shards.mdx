@@ -1,0 +1,142 @@
+# Scheduling Shards
+
+Scheduling shards partition a cluster into independent scheduling domains. Each shard can have its own scheduler deployment, node set, queue set, PodGroups, and scheduler arguments.
+
+<ShardAnimation />
+
+Display the fake H100 and L40S node pools. This makes the shard boundary explicit in the lab.
+
+```bash
+cat manifests/17-shards/shard-node-pools.yaml
+```
+
+Apply the fake shard node pools.
+
+```bash
+kubectl apply -f manifests/17-shards/shard-node-pools.yaml
+```
+
+Display the H100 shard manifest. This shard targets nodes, queues, and PodGroups labeled `nvidia.com/gpu.machine: NVIDIA-DGX-H100`.
+
+```bash
+cat manifests/17-shards/scheduling-shard-h100.yaml
+```
+
+Apply the H100 shard.
+
+```bash
+kubectl apply -f manifests/17-shards/scheduling-shard-h100.yaml
+```
+
+Display the L40S shard manifest. It targets a different node set and uses a smaller action set to show that shards can carry different scheduler arguments.
+
+```bash
+cat manifests/17-shards/scheduling-shard-l40s.yaml
+```
+
+Apply the L40S shard.
+
+```bash
+kubectl apply -f manifests/17-shards/scheduling-shard-l40s.yaml
+```
+
+Read the H100 shard resource.
+
+```bash
+kubectl get schedulingshard h100-shard -o yaml
+```
+
+Read the L40S shard resource.
+
+```bash
+kubectl get schedulingshard l40s-shard -o yaml
+```
+
+List nodes that match the simulated H100 label.
+
+```bash
+kubectl get nodes -l nvidia.com/gpu.machine=NVIDIA-DGX-H100
+```
+
+List nodes that match the simulated L40S label.
+
+```bash
+kubectl get nodes -l nvidia.com/gpu.machine=NVIDIA-L40S
+```
+
+Display the H100 workload. Its queue and Job labels match the H100 shard partition.
+
+```bash
+cat manifests/17-shards/h100-workload.yaml
+```
+
+Apply the H100 workload.
+
+```bash
+kubectl apply -f manifests/17-shards/h100-workload.yaml
+```
+
+Display the L40S workload. Its queue and Job labels match the L40S shard partition.
+
+```bash
+cat manifests/17-shards/l40s-workload.yaml
+```
+
+Apply the L40S workload.
+
+```bash
+kubectl apply -f manifests/17-shards/l40s-workload.yaml
+```
+
+List H100 Pods and confirm they are placed only on the H100 node set.
+
+```bash
+kubectl get pods -n kai-lab17-h100 -o wide
+```
+
+List L40S Pods and confirm they are placed only on the L40S node set.
+
+```bash
+kubectl get pods -n kai-lab17-l40s -o wide
+```
+
+List all scheduler deployments. A real shard configuration may create separate scheduler instances for partitions.
+
+```bash
+kubectl get deploy -n kai-scheduler
+```
+
+## Clean Up
+
+Delete both shard examples before moving on.
+
+```bash
+kubectl delete schedulingshard h100-shard l40s-shard --ignore-not-found
+```
+
+Delete the workload namespaces.
+
+```bash
+kubectl delete namespace kai-lab17-h100 kai-lab17-l40s --ignore-not-found
+```
+
+Delete the shard-specific queues.
+
+```bash
+kubectl delete queue h100-research l40s-inference --ignore-not-found
+```
+
+Delete the fake shard nodes.
+
+```bash
+kubectl delete node shard-h100-01 shard-h100-02 shard-l40s-01 shard-l40s-02 --ignore-not-found
+```
+
+## What Just Happened
+
+You created two node-pool-specific scheduler configurations. The H100 shard and L40S shard each had its own node set, queue labels, workload labels, and action configuration. That isolation is the main value of shards: rules such as placement, queue depth, min runtime, or enabled actions can differ by accelerator pool without blending queues and PodGroups across pools.
+
+## Sources
+
+- [Scheduling Shards](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/operator/scheduling-shards.md)
+- [Scheduling Deep Dive - Scheduling Shards](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/scheduling-deep-dive/README.md)

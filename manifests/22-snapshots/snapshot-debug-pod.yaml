@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kai-lab22
+  labels:
+    kai-scheduler-101/chapter: "22"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: snapshot-debug
+  namespace: kai-lab22
+  labels:
+    kai.scheduler/queue: default-queue
+    kai-scheduler-101/chapter: "22"
+spec:
+  schedulerName: kai-scheduler
+  restartPolicy: Never
+  containers:
+    - name: debug
+      image: curlimages/curl:8.10.1
+      command: ["sh", "-c"]
+      args: ["sleep 3600"]

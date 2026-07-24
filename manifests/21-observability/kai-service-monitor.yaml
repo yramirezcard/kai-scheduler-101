@@ -1,0 +1,16 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kai-scheduler
+  namespace: kai-scheduler
+  labels:
+    kai-scheduler-101/chapter: "21"
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: kai-scheduler
+  namespaceSelector:
+    matchNames: [kai-scheduler]
+  endpoints:
+    - port: metrics
+      interval: 30s

@@ -1,0 +1,14 @@
+apiVersion: kai.scheduler/v1
+kind: SchedulingShard
+metadata:
+  name: l40s-shard
+  labels:
+    kai-scheduler-101/chapter: "17"
+spec:
+  partitionLabelKey: nvidia.com/gpu.machine
+  partitionLabelValue: NVIDIA-L40S
+  args:
+    actions: [allocate, consolidate]
+  queueDepthPerAction:
+    allocate: 30
+    consolidate: 10

@@ -1,0 +1,30 @@
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: reclaim-parent
+  labels: { kai-scheduler-101/chapter: "08" }
+spec:
+  resources:
+    gpu: { quota: 8, limit: 8, overQuotaWeight: 1 }
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: reclaim-high
+  labels: { kai-scheduler-101/chapter: "08" }
+spec:
+  parentQueue: reclaim-parent
+  priority: 100
+  resources:
+    gpu: { quota: 4, limit: 8, overQuotaWeight: 2 }
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: reclaim-low
+  labels: { kai-scheduler-101/chapter: "08" }
+spec:
+  parentQueue: reclaim-parent
+  priority: 20
+  resources:
+    gpu: { quota: 4, limit: 8, overQuotaWeight: 1 }

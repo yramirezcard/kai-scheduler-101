@@ -1,0 +1,59 @@
+# Priority Classes
+
+Queue priority and workload priority are different systems. Queue priority controls surplus distribution between queues. Workload priority controls ordering and preemption inside one queue.
+
+The `priorityClassName` on a workload controls three things:
+
+- `Scheduling order` — higher-priority workloads are scheduled first when resources become available
+
+- `Preemptibility` — by default, priority < 100 is preemptible, priority >= 100 is non-preemptible
+
+- `Preemption` — a higher-priority workload can evict a lower-priority preemptible workload to free up resources, but only within the same queue
+
+
+KAI includes conventional priority values for common AI workload types. The important threshold is 100: workloads with priority value 100 or higher are treated as non-preemptible and can only consume in-quota resources.
+
+<PriorityClassDiagram />
+
+Display the PriorityClass manifest.
+
+```bash
+cat manifests/10-priority/priority-classes.yaml
+```
+
+Apply the priority classes. The command is idempotent, so it is safe if KAI already created matching classes.
+
+```bash
+kubectl apply -f manifests/10-priority/priority-classes.yaml
+```
+
+List the four classes used by the lab.
+
+```bash
+kubectl get priorityclass train build-preemptible build inference
+```
+
+Read the `train` priority value.
+
+```bash
+kubectl get priorityclass train -o yaml
+```
+
+Read the `inference` priority value and compare it with `train`.
+
+```bash
+kubectl get priorityclass inference -o yaml
+```
+
+## Clean Up
+
+Keep these priority classes for the next preemption chapter. They do not consume quota, and the next lab expects the same workload priority vocabulary.
+
+## What Just Happened
+
+You created the workload priority vocabulary for the preemption labs. Higher workload priority can change scheduling order and victim selection, but it does not give a queue extra quota.
+
+## Sources
+
+- [Workload Priority](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/priority/README.md)
+- [Scheduling Deep Dive - Workload Priority](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/scheduling-deep-dive/README.md)

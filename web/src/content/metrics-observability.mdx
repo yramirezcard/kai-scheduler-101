@@ -1,0 +1,112 @@
+# Metrics & Observability
+
+KAI exposes metrics and scheduling events. Events are best for one workload decision. Metrics are better for trends: queue pressure, scheduling latency, pending work, and component health.
+
+This chapter assumes Prometheus and Grafana are already deployed, for example with kube-prometheus-stack. The hands-on step creates the KAI `ServiceMonitor`, opens Prometheus, and queries metrics exposed by KAI Scheduler.
+
+Display the KAI ServiceMonitor manifest.
+
+```bash
+cat manifests/21-observability/kai-service-monitor.yaml
+```
+
+Apply the ServiceMonitor so Prometheus can discover KAI metrics.
+
+```bash
+kubectl apply -f manifests/21-observability/kai-service-monitor.yaml
+```
+
+List ServiceMonitor objects that mention KAI.
+
+```bash
+kubectl get servicemonitor -A | grep kai || true
+```
+
+List monitoring services. In Brev, expose applications with configured tunnel ports rather than appending raw ports to tunnel URLs.
+
+```bash
+kubectl get svc -n monitoring
+```
+
+Forward the Prometheus service to local port `9090`. Keep this command running while you use the Prometheus UI.
+
+```bash
+kubectl -n monitoring port-forward svc/kube-prometheus-stack-prometheus 9090:9090
+```
+
+Open Prometheus and use the expression box to run the sample PromQL queries below.
+
+<AppLaunchButton label="Open Prometheus UI" path="/" port={9090} />
+
+Start with a discovery query. This returns KAI metric series if Prometheus is scraping the KAI services.
+
+```promql
+{__name__=~"kai_.*"}
+```
+
+Check that Prometheus sees scrape targets in the `kai-scheduler` namespace.
+
+```promql
+up{namespace="kai-scheduler"}
+```
+
+Inspect how many samples Prometheus is scraping from KAI targets.
+
+```promql
+scrape_samples_scraped{namespace="kai-scheduler"}
+```
+
+Query queue GPU allocation by queue name.
+
+```promql
+max by (queue_name) (kai_queue_allocated_gpus)
+```
+
+Compare deserved GPU allocation and scheduler fair-share. These are useful after you run queue, fair-share, or reclaim labs.
+
+```promql
+max by (queue_name) (kai_queue_deserved_gpus)
+```
+
+Query computed GPU fair-share by queue.
+
+```promql
+max by (queue_name) (kai_queue_fair_share_gpu)
+```
+
+Query scheduler end-to-end scheduling latency in seconds.
+
+```promql
+max by (pod) (kai_e2e_scheduling_latency_milliseconds) / 1000
+```
+
+Query scheduler action latency by action. This helps compare actions such as allocate, consolidate, reclaim, and preempt.
+
+```promql
+max by (action) (kai_action_scheduling_latency_milliseconds) / 1000
+```
+
+Query plugin latency by plugin. This is useful when a scheduling cycle is slow and you want to see which plugin contributes most.
+
+```promql
+max by (plugin) (kai_plugin_scheduling_latency_milliseconds) / 1000
+```
+
+## Clean Up
+
+Delete the KAI ServiceMonitor first. It is installed into the `kai-scheduler` namespace.
+
+```bash
+kubectl delete -f manifests/21-observability/kai-service-monitor.yaml --ignore-not-found
+```
+
+## What Just Happened
+
+You created a scrape target for KAI and queried Prometheus directly. Metrics do not replace events; they give you aggregate visibility once individual event inspection is not enough.
+
+## Sources
+
+- [KAI Metrics](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/metrics/README.md)
+- [KAI Scheduler Internals Dashboard](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/metrics/grafana/kai-scheduler-internals.json)
+- [KAI Queues Allocation Dashboard](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/metrics/grafana/kai-queues-allocation.json)
+- [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)

@@ -1,0 +1,55 @@
+---
+- name: Install kind
+  ansible.builtin.shell: |
+    set -euo pipefail
+    arch="$(uname -m)"
+    case "$arch" in x86_64|amd64) goarch=amd64 ;; aarch64|arm64) goarch=arm64 ;; *) goarch=amd64 ;; esac
+    if ! command -v kind >/dev/null 2>&1; then
+      curl -fsSLo /tmp/kind "https://kind.sigs.k8s.io/dl/${KIND_VERSION:-v0.30.0}/kind-linux-${goarch}"
+      install -m 0755 /tmp/kind /usr/local/bin/kind
+    fi
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Create kind cluster with DRA feature gates
+  ansible.builtin.shell: |
+    set -euo pipefail
+    export PATH="/usr/local/bin:$PATH"
+    if kind get clusters 2>/dev/null | grep -qx "{{ cluster_name }}"; then
+      kind get kubeconfig --name "{{ cluster_name }}" > "{{ repo_root }}/kubeconfig"
+      exit 0
+    fi
+    cfg="$(mktemp)"
+    cat > "$cfg" <<EOF
+    kind: Cluster
+    apiVersion: kind.x-k8s.io/v1alpha4
+    name: {{ cluster_name }}
+    featureGates:
+      DynamicResourceAllocation: true
+      DRAResourceClaimDeviceStatus: true
+    runtimeConfig:
+      resource.k8s.io/v1: true
+    nodes:
+    - role: control-plane
+      image: {{ kind_node_image }}
+      kubeadmConfigPatches:
+      - |
+        kind: ClusterConfiguration
+        apiServer:
+          extraArgs:
+            feature-gates: DynamicResourceAllocation=true,DRAResourceClaimDeviceStatus=true
+        controllerManager:
+          extraArgs:
+            feature-gates: DynamicResourceAllocation=true,DRAResourceClaimDeviceStatus=true
+        scheduler:
+          extraArgs:
+            feature-gates: DynamicResourceAllocation=true,DRAResourceClaimDeviceStatus=true
+    EOF
+    kind create cluster --config "$cfg" --wait 180s
+    rm -f "$cfg"
+    kind get kubeconfig --name "{{ cluster_name }}" > "{{ repo_root }}/kubeconfig"
+  args:
+    executable: /bin/bash
+  become: false
+  changed_when: false

@@ -1,0 +1,68 @@
+# Elastic Workloads
+
+Elastic scheduling sits between strict all-or-nothing and best-effort scheduling. A workload declares the minimum shape that is useful, then treats capacity above that minimum as optional. KAI schedules the required Pods or SubGroups first and adds elastic capacity later when the cluster has room.
+
+The official KAI elastic model applies at two levels:
+
+- `minMember` controls the minimum number of Pods needed inside a flat PodGroup or a leaf SubGroup.
+- `minSubGroup` controls the minimum number of direct child SubGroups needed inside a hierarchical PodGroup or an intermediate SubGroup.
+- Capacity above those thresholds is elastic. It can be scheduled opportunistically, and it can be reclaimed without killing the whole workload as long as the workload remains above its required threshold.
+
+In this chapter, the example is a PodGroup with four replica SubGroups. Each replica needs one Pod, but the root PodGroup sets `minSubGroup: 3`. That means the workload can start once any three replicas fit. The fourth replica is useful extra capacity, so it can remain pending and join later.
+
+For real elastic PyTorch jobs, KAI's documentation calls out an important prerequisite: the training-operator must be installed in the cluster. This lab keeps the example lighter by inspecting the PodGroup shape directly instead of launching an actual PyTorch training job.
+
+<ElasticAnimation />
+
+This manifest creates the isolated namespace, the queue, and the elastic PodGroup. Display it first so you can see the `minSubGroup: 3` rule and the four replica SubGroups before anything is applied.
+
+```bash
+cat manifests/13-elastic/elastic-replicas-podgroup.yaml
+```
+
+Apply the elastic PodGroup example. In a real controller-driven workflow, a training controller or serving controller would create this kind of scheduler-facing structure for KAI.
+
+```bash
+kubectl apply -f manifests/13-elastic/elastic-replicas-podgroup.yaml
+```
+
+Read the PodGroup back from the Kubernetes API. Focus on the root `minSubGroup` and the four child SubGroups.
+
+```bash
+kubectl get podgroup -n kai-lab13 elastic-four-replicas -o yaml
+```
+
+List the PodGroups in the namespace. This is a quick way to confirm the scheduler-visible object exists.
+
+```bash
+kubectl get podgroups -n kai-lab13
+```
+
+Read namespace events if the object is rejected or remains unschedulable. Admission or scheduling messages are usually clearer in events than in the object list.
+
+```bash
+kubectl get events -n kai-lab13 --sort-by=.lastTimestamp
+```
+
+## Clean Up
+
+Delete the elastic namespace. This clears the PodGroup object used in the scenario.
+
+```bash
+kubectl delete namespace kai-lab13 --ignore-not-found
+```
+
+Delete the cluster-scoped elastic queue.
+
+```bash
+kubectl delete queue elastic-demo --ignore-not-found
+```
+
+## What Just Happened
+
+You separated "minimum useful work" from "maximum desired work." The first three replica SubGroups are enough to make progress, while the fourth is elastic capacity. That is the pattern behind elastic training and elastic serving: start once the required threshold is met, then use spare GPUs if they appear.
+
+## Sources
+
+- [Elastic Workloads](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/elastic/README.md)
+- [Hierarchical PodGroup Design](https://github.com/kai-scheduler/KAI-Scheduler/tree/main/docs/developer/designs/hierarchical-podgroup)

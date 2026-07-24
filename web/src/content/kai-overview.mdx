@@ -1,0 +1,28 @@
+# KAI Scheduler Overview
+
+KAI Scheduler is a Kubernetes-native scheduler built for AI clusters. The default Kubernetes scheduler is excellent at deciding whether one Pod can fit on one Node. AI platforms usually need a wider policy view: teams share expensive GPU pools, training jobs need several workers at once, inference services need stronger priority, and distributed workloads often care about node, rack, or accelerator topology.
+
+KAI adds that platform view by scheduling through queues, PodGroups, priority classes, fairness rules, topology constraints, GPU sharing, and Dynamic Resource Allocation.
+
+<KaiOverviewDiagram />
+
+Use KAI instead of the default scheduler when the important scheduling question is not just "where can this Pod fit?" but "which team deserves these GPUs right now, should this gang start together, and is this placement fair for the whole cluster?"
+
+The core ideas you will practice in this lab are:
+
+- **Queues** model organizations, teams, projects, and entitlement. A workload belongs to a leaf queue.
+- **Quota and limits** separate guaranteed capacity from maximum burst capacity.
+- **Queue priority and over-quota weight** decide who receives surplus after guaranteed quota is satisfied.
+- **Workload priority** decides ordering and preemption inside a queue.
+- **Reclaim** moves only over-quota, preemptible resources between queues.
+- **PodGroups** give KAI a scheduling unit larger than one Pod, which is essential for gang scheduling.
+- **Topology** helps place related Pods near each other when communication locality matters.
+- **DRA** gives the scheduler and binder a modern device-claim workflow instead of relying on legacy GPU limits.
+
+This Launchable runs on a CPU-only Brev instance. kind provides the real Kubernetes API. KWOK creates simulated nodes. fake-gpu-operator adds fake GPU resources so the scheduler can make realistic decisions without physical accelerators.
+
+## Sources
+
+- [KAI Scheduler docs](https://github.com/kai-scheduler/KAI-Scheduler/tree/main/docs)
+- [Scheduling Deep Dive](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/scheduling-deep-dive/README.md)
+- [Quick Start](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/quickstart/README.md)

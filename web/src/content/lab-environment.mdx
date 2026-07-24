@@ -1,0 +1,61 @@
+# Lab Environment
+
+Before installing KAI, inspect the cluster you have been given. The point of this chapter is to separate the base Kubernetes environment from the KAI control plane you will install later.
+
+The first command confirms that `kubectl` can reach the kind API server.
+
+```bash
+kubectl cluster-info
+```
+
+List all nodes with extra detail. You should see the kind control-plane node plus KWOK-managed simulated nodes.
+
+```bash
+kubectl get nodes -o wide
+```
+
+Show the fake GPU-related labels and allocatable GPU column. This tells you whether the simulated node pool is visible to Kubernetes.
+
+```bash
+kubectl get nodes -o custom-columns='NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu,POOL:.metadata.labels.run\.ai/simulated-gpu-node-pool'
+```
+
+Check Helm. KAI, fake-gpu-operator, and later observability tooling are installed with Helm.
+
+```bash
+helm version
+```
+
+List every Pod in the cluster. At this point you are looking for Kubernetes and simulation components, not KAI.
+
+```bash
+kubectl get pods -A
+```
+
+Confirm KAI is not installed yet. The namespace should be missing before the installation chapter.
+
+```bash
+kubectl get pods -n kai-scheduler
+```
+
+Confirm the stock scheduler is running. This is the baseline scheduler that kind installed.
+
+```bash
+kubectl get pods -n kube-system -l component=kube-scheduler
+```
+
+
+Observe the count of KWOK nodes. Four fake GPU nodes are enough for the first half of the lab; a later topology chapter expands the fleet to 24 nodes.
+
+```bash
+kubectl get nodes -l type=kwok
+```
+
+## What Just Happened
+
+You verified a real Kubernetes API, Helm, the default scheduler, and the fake GPU node pool. The lab is intentionally CPU-only, but the scheduler sees a GPU-shaped cluster. That lets you focus on KAI scheduling behavior without waiting for physical GPU capacity.
+
+## Sources
+
+- [KWOK documentation](https://kwok.sigs.k8s.io/)
+- [fake-gpu-operator](https://github.com/run-ai/fake-gpu-operator)

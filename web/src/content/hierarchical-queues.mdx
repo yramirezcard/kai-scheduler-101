@@ -1,0 +1,58 @@
+# Hierarchical Queues
+
+Hierarchical queues let a platform team model several levels of an organization. In this lab you will create a three-layer quota tree:
+
+- Layer 1: `ai-org`, the top-level organization.
+- Layer 2: `foundation-models` and `applied-ai`, department queues.
+- Layer 3: `fm-training` and `fm-evaluation`, leaf team queues under `foundation-models`.
+
+The important rule is recursive distribution. A parent queue receives or owns a budget, then child queues divide that budget. Workloads still target only leaf queues.
+
+<QueueHierarchy />
+
+Display the three-layer queue manifest.
+
+```bash
+cat manifests/05-hierarchy/hierarchical-queues.yaml
+```
+
+Apply the hierarchy.
+
+```bash
+kubectl apply -f manifests/05-hierarchy/hierarchical-queues.yaml
+```
+
+List queues to see all layers together.
+
+```bash
+kubectl get queues
+```
+
+Describe the middle layer. Look for `parentQueue: ai-org` and the GPU quota that this department divides among its children.
+
+```bash
+kubectl describe queue foundation-models
+```
+
+Describe a leaf queue. This is a valid workload target because it has no children.
+
+```bash
+kubectl describe queue fm-training
+```
+
+## Clean Up
+
+This chapter created only cluster-scoped queues. Delete leaf queues before parent queues so the hierarchy can be removed cleanly.
+
+```bash
+kubectl delete queue fm-training fm-evaluation foundation-models applied-ai ai-org --ignore-not-found
+```
+
+## What Just Happened
+
+You built an organization-shaped quota tree. The top queue protects total AI capacity, the department queues divide that capacity between larger groups, and leaf queues become the actual submission targets for workloads.
+
+## Sources
+
+- [Scheduling Queues](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/queues/README.md)
+- [Scheduling Deep Dive](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/scheduling-deep-dive/README.md)

@@ -1,0 +1,11 @@
+apiVersion: kai.scheduler/v1
+kind: Topology
+metadata:
+  name: lab-topology
+  labels:
+    kai-scheduler-101/chapter: "18"
+spec:
+  levels:
+    - nodeLabel: kai.scheduler/topology-block
+    - nodeLabel: kai.scheduler/topology-rack
+    - nodeLabel: kubernetes.io/hostname

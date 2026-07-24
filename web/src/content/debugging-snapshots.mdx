@@ -1,0 +1,60 @@
+# Debugging with Snapshots
+
+KAI debugging has a natural escalation path:
+
+1. Start with Kubernetes Events for the affected workload.
+2. Use metrics when the problem is systemic or time-based.
+3. Capture a scheduler snapshot when you need the full scheduler view for replay and deeper analysis.
+
+Display the non-blocking debug Pod manifest. The lab avoids `kubectl port-forward` because port-forward blocks the embedded terminal.
+
+```bash
+cat manifests/22-snapshots/snapshot-debug-pod.yaml
+```
+
+Apply the debug Pod.
+
+```bash
+kubectl apply -f manifests/22-snapshots/snapshot-debug-pod.yaml
+```
+
+List KAI services to identify possible in-cluster snapshot endpoints.
+
+```bash
+kubectl get svc -n kai-scheduler
+```
+
+List KAI Pods so you know which component would own scheduler debug endpoints.
+
+```bash
+kubectl get pods -n kai-scheduler
+```
+
+Read recent events across the cluster.
+
+```bash
+kubectl get events -A --sort-by=.lastTimestamp | tail -40
+```
+
+Inspect scheduler logs as the next level of detail.
+
+```bash
+kubectl logs -n kai-scheduler deploy/kai-scheduler --tail=120
+```
+
+## Clean Up
+
+Delete the snapshot debug namespace so the helper Pod does not remain in the cluster.
+
+```bash
+kubectl delete namespace kai-lab22 --ignore-not-found
+```
+
+## What Just Happened
+
+You prepared the non-blocking snapshot workflow. In a production incident, you would use an in-cluster client Pod or a routed internal service to request the snapshot, then replay it with KAI tooling.
+
+## Sources
+
+- [KAI Scheduling Deep Dive](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/scheduling-deep-dive/README.md)
+- [KAI developer docs](https://github.com/kai-scheduler/KAI-Scheduler/tree/main/docs/developer)

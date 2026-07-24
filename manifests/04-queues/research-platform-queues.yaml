@@ -1,0 +1,45 @@
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: lab-teams
+  labels:
+    kai-scheduler-101/chapter: "04"
+spec:
+  displayName: "Lab Teams"
+  resources:
+    gpu:
+      quota: 8
+      limit: 16
+      overQuotaWeight: 1
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: research
+  labels:
+    kai-scheduler-101/chapter: "04"
+spec:
+  displayName: "Research"
+  parentQueue: lab-teams
+  priority: 80
+  resources:
+    gpu:
+      quota: 4
+      limit: 12
+      overQuotaWeight: 2
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: platform
+  labels:
+    kai-scheduler-101/chapter: "04"
+spec:
+  displayName: "Platform"
+  parentQueue: lab-teams
+  priority: 80
+  resources:
+    gpu:
+      quota: 4
+      limit: 12
+      overQuotaWeight: 1

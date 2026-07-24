@@ -1,0 +1,77 @@
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: ai-org
+  labels:
+    kai-scheduler-101/chapter: "05"
+spec:
+  displayName: "AI Organization"
+  resources:
+    gpu:
+      quota: 16
+      limit: 24
+      overQuotaWeight: 1
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: foundation-models
+  labels:
+    kai-scheduler-101/chapter: "05"
+spec:
+  displayName: "Foundation Models Department"
+  parentQueue: ai-org
+  priority: 90
+  resources:
+    gpu:
+      quota: 12
+      limit: 20
+      overQuotaWeight: 2
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: applied-ai
+  labels:
+    kai-scheduler-101/chapter: "05"
+spec:
+  displayName: "Applied AI Department"
+  parentQueue: ai-org
+  priority: 70
+  resources:
+    gpu:
+      quota: 4
+      limit: 12
+      overQuotaWeight: 1
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: fm-training
+  labels:
+    kai-scheduler-101/chapter: "05"
+spec:
+  displayName: "Foundation Model Training Team"
+  parentQueue: foundation-models
+  priority: 80
+  resources:
+    gpu:
+      quota: 8
+      limit: 16
+      overQuotaWeight: 2
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: fm-evaluation
+  labels:
+    kai-scheduler-101/chapter: "05"
+spec:
+  displayName: "Foundation Model Evaluation Team"
+  parentQueue: foundation-models
+  priority: 60
+  resources:
+    gpu:
+      quota: 4
+      limit: 8
+      overQuotaWeight: 1

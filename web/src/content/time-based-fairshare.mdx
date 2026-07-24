@@ -1,0 +1,56 @@
+# Time-Based Fairshare
+
+Point-in-time fair-share only looks at the current scheduling cycle. That is useful, but it has no memory: if two queues are tied and both have an endless backlog of large jobs, the same queue can keep winning because of tie-breakers such as queue order or creation time.
+
+Time-based fairshare adds memory to over-quota scheduling. **KAI tracks historical resource usage per queue and resource type**. A queue that has consumed many GPU-hours recently is penalized when over-quota resources are divided again, while a queue with little recent over-quota usage is boosted. Over a long enough window, queues with the same over-quota weight should receive similar GPU-time.
+
+This does **not** replace the normal guarantees:
+
+- Deserved quota still comes first.
+- Queue priority still comes before over-quota weight.
+- Time-based fairshare only adjusts the over-quota division within the relevant priority tier.
+
+The animation below uses only two queues. Vision runs first and accumulates GPU-time. LLM has low historical usage, so its effective fair share rises and it gets the next over-quota turn. After LLM runs long enough, its history increases and Vision becomes comparatively starved. The result is the oscillation shown in the source diagrams: resources move back and forth instead of one team monopolizing the over-quota pool.
+
+<TimeFairshareAnimation />
+
+Display the example `SchedulingShard`. Look under `spec.args.timeBasedFairShare`: `enabled: true` turns the feature on for this shard, and `halfLifeTimeSeconds: 3600` sets a one-hour decay half-life for historical usage.
+
+```bash
+cat manifests/09-time-fairshare/scheduling-shard-time-fairshare.yaml
+```
+
+Apply the example shard.
+
+```bash
+kubectl apply -f manifests/09-time-fairshare/scheduling-shard-time-fairshare.yaml
+```
+
+Read the shard back from the API.
+
+```bash
+kubectl get schedulingshard time-fairshare-demo -o yaml
+```
+
+List all shards so you can see the default shard and lab-created examples together.
+
+```bash
+kubectl get schedulingshard
+```
+
+## Clean Up
+
+Delete the example shard so later placement and shard chapters start from their own configuration.
+
+```bash
+kubectl delete schedulingshard time-fairshare-demo --ignore-not-found
+```
+
+## What Just Happened
+
+You saw where historical fairness is configured and how to reason about it. The lab keeps the hands-on portion light because meaningful time-based behavior requires elapsed time, persistent usage history, Prometheus-backed accounting, and enough workload churn to make the oscillation visible.
+
+## Sources
+
+- [KAI Time Based Fairshare Design](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/developer/designs/time-based-fairshare/time-based-fairshare.md)
+- [NVIDIA Technical Blog: Ensuring Balanced GPU Allocation in Kubernetes Clusters with Time-Based Fairshare](https://developer.nvidia.com/blog/ensuring-balanced-gpu-allocation-in-kubernetes-clusters-with-time-based-fairshare/)
