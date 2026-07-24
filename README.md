@@ -39,7 +39,7 @@ Optional Launchable variables:
 | `CLUSTER_NAME` | `kai-scheduler-101` |
 | `WORKSHOP_PORT` | `3000` |
 | `KAI_VERSION` | `v0.16.5` |
-| `FAKE_GPU_OPERATOR_VERSION` | `0.2.0` |
+| `FAKE_GPU_OPERATOR_VERSION` | `0.0.59` |
 | `KWOK_VERSION` | `v0.7.0` |
 
 ## Repo Layout
