@@ -3,25 +3,24 @@
   ansible.builtin.shell: |
     set -euo pipefail
     export KUBECONFIG="{{ repo_root }}/kubeconfig"
-    helm repo add fake-gpu-operator https://runai.jfrog.io/artifactory/api/helm/fake-gpu-operator-charts-prod --force-update
-    helm repo update fake-gpu-operator
+
     version_args=()
     chart_version="{{ fake_gpu_operator_version }}"
-    if [[ "$chart_version" == "v0.2.0" || "$chart_version" == "0.2.0" ]]; then
-      echo "Ignoring fake-gpu-operator GitHub release tag $chart_version; Helm chart repo uses chart versions, not release tags."
-      chart_version=""
-    fi
+    chart_version="${chart_version#v}"
     if [[ -n "$chart_version" ]]; then
       version_args=(--version "$chart_version")
     fi
-    helm upgrade -i gpu-operator fake-gpu-operator/fake-gpu-operator \
+
+    helm upgrade -i gpu-operator oci://ghcr.io/run-ai/fake-gpu-operator/fake-gpu-operator \
       -n gpu-operator --create-namespace \
       "${version_args[@]}" \
       --set 'topology.nodePools.default.gpuCount=8' \
       --set 'topology.nodePools.default.gpuProduct=NVIDIA-H100-80GB-HBM3' \
       --set 'topology.nodePools.default.gpuMemory=81920' \
-      --set 'dra.enabled=true' \
-      --set 'kwok.enabled=true'
+      --set 'draPlugin.enabled=true' \
+      --set 'kwokDraPlugin.enabled=true' \
+      --set 'devicePlugin.enabled=false' \
+      --set 'kwokGpuDevicePlugin.enabled=false'
     kubectl -n gpu-operator rollout status deployment --timeout=180s || true
     kubectl get nodes -l run.ai/simulated-gpu-node-pool=default
   args:

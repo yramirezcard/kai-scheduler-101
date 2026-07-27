@@ -39,10 +39,10 @@ Optional Launchable variables:
 | `CLUSTER_NAME` | `kai-scheduler-101` |
 | `WORKSHOP_PORT` | `3000` |
 | `KAI_VERSION` | `v0.16.5` |
-| `FAKE_GPU_OPERATOR_VERSION` | unset, uses latest chart from the Helm repo |
+| `FAKE_GPU_OPERATOR_VERSION` | `0.2.0` |
 | `KWOK_VERSION` | `v0.7.0` |
 
-`FAKE_GPU_OPERATOR_VERSION` is an optional Helm chart version override. Leave it unset for the Launchable default. Do not set it to the fake-gpu-operator GitHub release tag such as `v0.2.0`; the Helm chart repository uses a different chart version stream.
+`FAKE_GPU_OPERATOR_VERSION` pins the OCI Helm chart from `oci://ghcr.io/run-ai/fake-gpu-operator/fake-gpu-operator`. The GitHub release tag is `v0.2.0`, while Helm expects chart version `0.2.0`; the setup role accepts either form and strips a leading `v` before calling Helm.
 
 ## Repo Layout
 
