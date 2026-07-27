@@ -42,6 +42,8 @@ Optional Launchable variables:
 | `FAKE_GPU_OPERATOR_VERSION` | unset, uses latest chart from the Helm repo |
 | `KWOK_VERSION` | `v0.7.0` |
 
+`FAKE_GPU_OPERATOR_VERSION` is an optional Helm chart version override. Leave it unset for the Launchable default. Do not set it to the fake-gpu-operator GitHub release tag such as `v0.2.0`; the Helm chart repository uses a different chart version stream.
+
 ## Repo Layout
 
 ```text
