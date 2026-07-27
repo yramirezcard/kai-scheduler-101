@@ -16,6 +16,7 @@
     set -euo pipefail
     export KUBECONFIG="{{ repo_root }}/kubeconfig"
     kubectl apply -f "{{ repo_root }}/kwok/fake-gpu-nodes-4.yaml"
+    kubectl annotate node -l type=kwok kwok.x-k8s.io/node=fake --overwrite
   args:
     executable: /bin/bash
   become: false

@@ -11,6 +11,15 @@
       version_args=(--version "$chart_version")
     fi
 
+    if kubectl get runtimeclass nvidia >/dev/null 2>&1; then
+      managed_by="$(kubectl get runtimeclass nvidia -o jsonpath='{.metadata.labels.app\.kubernetes\.io/managed-by}' 2>/dev/null || true)"
+      release_name="$(kubectl get runtimeclass nvidia -o jsonpath='{.metadata.annotations.meta\.helm\.sh/release-name}' 2>/dev/null || true)"
+      release_namespace="$(kubectl get runtimeclass nvidia -o jsonpath='{.metadata.annotations.meta\.helm\.sh/release-namespace}' 2>/dev/null || true)"
+      if [[ "$managed_by" != "Helm" || "$release_name" != "gpu-operator" || "$release_namespace" != "gpu-operator" ]]; then
+        kubectl delete runtimeclass nvidia
+      fi
+    fi
+
     helm upgrade -i gpu-operator oci://ghcr.io/run-ai/fake-gpu-operator/fake-gpu-operator \
       -n gpu-operator --create-namespace \
       "${version_args[@]}" \
