@@ -11,7 +11,7 @@ export default function Home() {
       <section className="border-b border-[var(--color-line)] pb-8">
         <div className="inline-flex items-center gap-2 border border-[var(--color-line-2)] bg-[var(--color-panel)] px-3 py-1 text-xs text-[var(--color-fg-dim)]">
           <Cpu size={14} className="text-[var(--color-kai-bright)]" />
-          CPU-only Brev lab with kind, KWOK, fake GPUs, and KAI Scheduler
+          CPU-only Brev lab with k3s, KWOK, fake GPUs, and KAI Scheduler
         </div>
         <h1 className="mt-5 max-w-4xl text-4xl font-extrabold leading-[1.08] md:text-6xl">
           KAI Scheduler 101
@@ -19,7 +19,7 @@ export default function Home() {
         <p className="mt-5 max-w-3xl text-lg text-[var(--color-fg-dim)]">
           A 60-minute hands-on path through KAI installation, queues, fairness, preemption,
           gang scheduling, topology, GPU sharing, DRA, and operations. Run every command in
-          the embedded shell against a real kind control plane and simulated GPU fleet.
+          the embedded shell against a real k3s control plane and simulated GPU fleet.
         </p>
         <div className="mt-7 flex flex-wrap items-center gap-3">
           <Link href={`/learn/${FIRST_SLUG}`} className="group inline-flex items-center gap-2 rounded-lg bg-[var(--color-kai)] px-5 py-3 font-semibold text-white shadow-[0_6px_20px_color-mix(in_srgb,var(--color-kai)_35%,transparent)] transition hover:bg-[var(--color-kai-bright)]">

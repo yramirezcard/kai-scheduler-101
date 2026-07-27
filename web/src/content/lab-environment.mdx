@@ -2,13 +2,13 @@
 
 Before installing KAI, inspect the cluster you have been given. The point of this chapter is to separate the base Kubernetes environment from the KAI control plane you will install later.
 
-The first command confirms that `kubectl` can reach the kind API server.
+The first command confirms that `kubectl` can reach the k3s API server.
 
 ```bash
 kubectl cluster-info
 ```
 
-List all nodes with extra detail. You should see the kind control-plane node plus KWOK-managed simulated nodes.
+List all nodes with extra detail. You should see the k3s control-plane node plus KWOK-managed simulated nodes.
 
 ```bash
 kubectl get nodes -o wide
@@ -38,7 +38,7 @@ Confirm KAI is not installed yet. The namespace should be missing before the ins
 kubectl get pods -n kai-scheduler
 ```
 
-Confirm the stock scheduler is running. This is the baseline scheduler that kind installed.
+Confirm the stock scheduler is running. This is the baseline scheduler that k3s installed.
 
 ```bash
 kubectl get pods -n kube-system -l component=kube-scheduler

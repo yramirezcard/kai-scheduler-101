@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Phase 70 (OPTIONAL, default on) — build + serve the interactive workshop website on the
 # instance. Next.js app (web/) with a live in-browser shell (node-pty) bridged to a real bash
-# with `kubectl` pointed at the kind cluster. Exposed on PORT 3000 → publish as a Brev tunnel.
+# with `kubectl` pointed at the k3s cluster. Exposed on PORT 3000 → publish as a Brev tunnel.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/common.sh

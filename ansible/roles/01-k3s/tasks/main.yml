@@ -1,0 +1,49 @@
+---
+- name: Ensure k3s config directory exists
+  ansible.builtin.file:
+    path: "{{ k3s_config_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Write k3s server config
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: "{{ k3s_config_dir }}/config.yaml"
+    mode: "0644"
+  notify: restart k3s
+
+- name: Install k3s server
+  ansible.builtin.shell: |
+    set -euo pipefail
+    if [[ -n "{{ k3s_version }}" ]]; then
+      curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="{{ k3s_version }}" sh -
+    else
+      curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL="{{ k3s_channel }}" sh -
+    fi
+  args:
+    executable: /bin/bash
+    creates: /usr/local/bin/k3s
+
+- name: Restart k3s if configuration changed before readiness checks
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for the k3s control-plane node to be Ready
+  ansible.builtin.command: k3s kubectl wait --for=condition=Ready node --all --timeout=30s
+  environment:
+    KUBECONFIG: "{{ k3s_kubeconfig }}"
+  register: node_ready
+  changed_when: false
+  retries: 20
+  delay: 10
+  until: node_ready.rc == 0
+
+- name: Publish kubeconfig for lab scripts and workshop shell
+  ansible.builtin.shell: |
+    set -euo pipefail
+    install -m 0644 "{{ k3s_kubeconfig }}" "{{ repo_root }}/kubeconfig"
+    if [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]]; then
+      chown "${SUDO_USER}:${SUDO_USER}" "{{ repo_root }}/kubeconfig" || true
+    fi
+  args:
+    executable: /bin/bash
+  changed_when: false

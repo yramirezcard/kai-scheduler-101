@@ -21,7 +21,7 @@ Expose these ports:
 | Port | Purpose |
 | --- | --- |
 | 3000 | Tutorial website with embedded shell |
-| 6443 | Optional kind API access from outside the VM |
+| 6443 | Optional k3s API access from outside the VM |
 
 Do not append raw ports to Brev tunnel URLs. Use the tunnel URL Brev provides for port 3000.
 
@@ -34,4 +34,4 @@ Do not append raw ports to Brev tunnel URLs. Use the tunnel URL Brev provides fo
 ## 5. Review
 
 - Name: `kai-scheduler-101`.
-- Optional variables: `KIND_NODE_IMAGE`, `CLUSTER_NAME`, `WORKSHOP_PORT`, `KAI_VERSION`, `FAKE_GPU_OPERATOR_VERSION`, `KWOK_VERSION`.
+- Optional variables: `K3S_CHANNEL`, `K3S_VERSION`, `WORKSHOP_PORT`, `KAI_VERSION`, `FAKE_GPU_OPERATOR_VERSION`, `KWOK_VERSION`.

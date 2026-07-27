@@ -23,8 +23,5 @@ require_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "Required command '$1' not found in PATH."
 }
 
-CLUSTER_NAME_DEFAULT="kai-scheduler-101"
-cluster_name() { echo "${CLUSTER_NAME:-$CLUSTER_NAME_DEFAULT}"; }
-
 # Where we write a kubeconfig for the workshop shell + host `kubectl` to use.
 kubeconfig_path() { echo "${REPO_ROOT}/kubeconfig"; }

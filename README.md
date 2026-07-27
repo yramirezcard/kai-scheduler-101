@@ -1,6 +1,6 @@
 # KAI Scheduler 101 Brev Launchable
 
-Hands-on KAI Scheduler lab for a CPU-only Brev VM. The bootstrap creates a kind cluster, installs KWOK, creates simulated GPU nodes, installs fake-gpu-operator, and serves an interactive Next.js tutorial with an embedded shell.
+Hands-on KAI Scheduler lab for a CPU-only Brev VM. The bootstrap creates a single-node k3s cluster, installs KWOK, creates simulated GPU nodes, installs fake-gpu-operator, and serves an interactive Next.js tutorial with an embedded shell.
 
 ## What This Lab Teaches
 
@@ -20,7 +20,7 @@ Hands-on KAI Scheduler lab for a CPU-only Brev VM. The bootstrap creates a kind 
 | Runtime | VM mode, Ubuntu 22.04 |
 | Compute | 16 vCPU, 32 GB RAM recommended |
 | GPU | none |
-| Kubernetes | kind |
+| Kubernetes | k3s |
 | Simulated GPU layer | KWOK plus fake-gpu-operator |
 | Workshop port | 3000 |
 
@@ -35,8 +35,8 @@ Optional Launchable variables:
 
 | Variable | Default |
 | --- | --- |
-| `KIND_NODE_IMAGE` | `kindest/node:v1.34.0` |
-| `CLUSTER_NAME` | `kai-scheduler-101` |
+| `K3S_CHANNEL` | `v1.34` |
+| `K3S_VERSION` | unset, uses `K3S_CHANNEL` |
 | `WORKSHOP_PORT` | `3000` |
 | `KAI_VERSION` | `v0.16.5` |
 | `FAKE_GPU_OPERATOR_VERSION` | `0.2.0` |
@@ -47,7 +47,7 @@ Optional Launchable variables:
 ## Repo Layout
 
 ```text
-ansible/      readable bootstrap roles for host prep, kind, tooling, KWOK, fake GPUs
+ansible/      readable bootstrap roles for host prep, k3s, tooling, KWOK, fake GPUs
 kwok/         simulated node manifests, including 4-node and 24-node fleets
 manifests/    YAML used by hands-on lessons
 scripts/      Brev wrapper, setup orchestration, and workshop service setup
@@ -62,11 +62,11 @@ npm install
 npm run dev
 ```
 
-The UI renders locally without a cluster. Hands-on checks need the Brev/kind environment.
+The UI renders locally without a cluster. Hands-on checks need the Brev/k3s environment.
 
 ## Teardown
 
 ```bash
-kind delete cluster --name kai-scheduler-101
+sudo /usr/local/bin/k3s-uninstall.sh
 sudo systemctl disable --now kai-scheduler-101-workshop.service
 ```

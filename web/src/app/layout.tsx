@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 export const metadata: Metadata = {
   title: "KAI Scheduler 101 - Self-Paced, Hands-On",
   description:
-    "Learn KAI Scheduler on a CPU-only Brev VM with kind, KWOK, fake GPU resources, guided labs, and an embedded shell.",
+    "Learn KAI Scheduler on a CPU-only Brev VM with k3s, KWOK, fake GPU resources, guided labs, and an embedded shell.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

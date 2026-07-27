@@ -19,9 +19,8 @@ chmod +x scripts/*.sh 2>/dev/null || true
 # Launchable env-config vars (Step 5) are injected as env vars; capture them into .env so
 # setup.sh reads them deterministically. All are optional — defaults ship in the repo.
 cat > .env <<EOF
-KIND_NODE_IMAGE=${KIND_NODE_IMAGE:-kindest/node:v1.34.0}
-CLUSTER_NAME=${CLUSTER_NAME:-kai-scheduler-101}
-KIND_WORKERS=${KIND_WORKERS:-1}
+K3S_CHANNEL=${K3S_CHANNEL:-v1.34}
+K3S_VERSION=${K3S_VERSION:-}
 WORKSHOP_PORT=${WORKSHOP_PORT:-3000}
 DEPLOY_WORKSHOP=${DEPLOY_WORKSHOP:-true}
 KAI_VERSION=${KAI_VERSION:-v0.16.5}

@@ -1,0 +1,12 @@
+write-kubeconfig-mode: "0644"
+disable:
+  - traefik
+kube-apiserver-arg:
+  - "feature-gates=DynamicResourceAllocation=true,DRAResourceClaimDeviceStatus=true"
+  - "runtime-config=resource.k8s.io/v1=true"
+kube-controller-manager-arg:
+  - "feature-gates=DynamicResourceAllocation=true,DRAResourceClaimDeviceStatus=true"
+kube-scheduler-arg:
+  - "feature-gates=DynamicResourceAllocation=true,DRAResourceClaimDeviceStatus=true"
+kubelet-arg:
+  - "feature-gates=DynamicResourceAllocation=true,DRAResourceClaimDeviceStatus=true"

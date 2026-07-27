@@ -4,7 +4,7 @@ export type Part = { id: string; title: string; subtitle: string; lessons: Lesso
 export const CURRICULUM: Part[] = [
   { id: "overview", title: "Part I - Overview", subtitle: "What KAI solves and how this simulated lab works", lessons: [
     { slug: "kai-overview", title: "KAI Scheduler Overview", blurb: "A Kubernetes-native scheduler for AI workloads, GPUs, queues, fairness, gangs, and topology.", minutes: 2 },
-    { slug: "lab-environment", title: "Lab Environment", blurb: "Verify kind, KWOK, fake GPU nodes, Helm, and the absence of KAI before installation.", minutes: 2, hasLab: true },
+    { slug: "lab-environment", title: "Lab Environment", blurb: "Verify k3s, KWOK, fake GPU nodes, Helm, and the absence of KAI before installation.", minutes: 2, hasLab: true },
   ]},
   { id: "install-architecture", title: "Part II - Installation & Architecture", subtitle: "Install KAI and inspect its controllers", lessons: [
     { slug: "installing-kai", title: "Installing KAI with Helm", blurb: "Install the pinned v0.16.5 chart from GHCR and validate pods, CRDs, and queues.", minutes: 4, hasLab: true },

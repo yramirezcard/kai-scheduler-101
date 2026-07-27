@@ -19,7 +19,7 @@ printf '%s\n' \
   "KAI Scheduler 101 lab workspace" \
   "--------------------------------" \
   "Everything under ./manifests and ./kwok is yours to inspect or edit." \
-  "kubectl is pre-pointed at the kind cluster." \
+  "kubectl is pre-pointed at the k3s cluster." \
   "Follow the lessons in the website; use Run in shell to send commands here." \
   > "$WORKSPACE/README.txt"
 
