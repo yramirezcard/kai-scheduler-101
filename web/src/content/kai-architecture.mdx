@@ -28,16 +28,10 @@ List Pods with node placement. This helps you connect deployments to runtime Pod
 kubectl get pods -n kai-scheduler -o wide
 ```
 
-Show KAI CRDs by topic. CRDs are the contracts between the user, controllers, and scheduler.
-
-```bash
-kubectl get crds | grep -E 'queue|podgroup|bindrequest|topology|schedulingshard|config'
-```
-
 Look for scheduler logs. They are the most direct view into decisions once you are debugging a real cluster.
 
 ```bash
-kubectl logs -n kai-scheduler deploy/kai-scheduler --tail=80
+kubectl logs -n kai-scheduler deploy/kai-scheduler-default --tail=80
 ```
 
 ## What Just Happened

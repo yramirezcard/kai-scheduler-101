@@ -26,6 +26,12 @@ Display the workload manifest before applying it. Notice the shape of each queue
 cat manifests/07-fairshare/drf-workloads.yaml
 ```
 
+Ensure the preemptible training priority class exists before creating the workloads. The manifests use `priorityClassName: train` so over-quota allocations remain movable by later scheduling actions.
+
+```bash
+kubectl apply -f manifests/10-priority/priority-classes.yaml
+```
+
 Submit the multi-resource workload mix.
 
 ```bash

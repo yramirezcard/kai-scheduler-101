@@ -32,22 +32,16 @@ List KAI Pods. The exact names can vary by chart internals, but you should see s
 kubectl get pods -n kai-scheduler
 ```
 
-
 Inspect the default queues. Fresh KAI installs create a default parent queue and a default leaf queue so you can submit a workload immediately.
 
 ```bash
 kubectl get queues
 ```
 
-Read the main KAI Config object. The operator reconciles this declarative configuration into running components.
-
-```bash
-kubectl get config kai-config -o yaml | sed -n '1,160p'
-```
 
 ## What Just Happened
 
-You installed KAI v0.16.5 and confirmed that its control plane, CRDs, and default queue hierarchy are present. KAI is now ready to schedule workloads that set `schedulerName: kai-scheduler` and a queue label.
+You installed KAI v0.16.5 and confirmed that its control plane, and default queue hierarchy are present. KAI is now ready to schedule workloads that set `schedulerName: kai-scheduler` and a queue label.
 
 ## Sources
 

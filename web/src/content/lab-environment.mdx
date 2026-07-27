@@ -51,6 +51,28 @@ Observe the count of KWOK nodes. Four fake GPU nodes are enough for the first ha
 kubectl get nodes -l type=kwok
 ```
 
+The Lab uses GPU DRA Driver, there GPUs are exposed through ResourceSlice objects. Inspect how many GPUs are available per node with the following query.
+
+```
+kubectl get resourceslices -o json \
+  | jq -r '
+      ["NODE","GPUS"],
+      (
+        [.items[]
+          | select(.spec.driver == "gpu.nvidia.com")
+          | {
+              node: .spec.nodeName,
+              gpus: (.spec.devices // [] | length)
+            }
+        ]
+        | group_by(.node)[]
+        | [.[0].node, (map(.gpus) | add)]
+      )
+      | @tsv
+    ' \
+  | column -t
+```
+
 ## What Just Happened
 
 You verified a real Kubernetes API, Helm, the default scheduler, and the fake GPU node pool. The lab is intentionally CPU-only, but the scheduler sees a GPU-shaped cluster. That lets you focus on KAI scheduling behavior without waiting for physical GPU capacity.

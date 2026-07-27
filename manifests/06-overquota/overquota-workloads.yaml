@@ -24,12 +24,13 @@ metadata:
   namespace: kai-lab06
   labels: { kai-scheduler-101/chapter: "06" }
 spec:
-  replicas: 6
+  replicas: 4
   selector: { matchLabels: { app: vision-team } }
   template:
     metadata: { labels: { app: vision-team, kai.scheduler/queue: vision-team, kai-scheduler-101/chapter: "06" } }
     spec:
       schedulerName: kai-scheduler
+      priorityClassName: train
       tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
       resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
       containers:
@@ -46,12 +47,13 @@ metadata:
   namespace: kai-lab06
   labels: { kai-scheduler-101/chapter: "06" }
 spec:
-  replicas: 6
+  replicas: 3
   selector: { matchLabels: { app: llm-team } }
   template:
     metadata: { labels: { app: llm-team, kai.scheduler/queue: llm-team, kai-scheduler-101/chapter: "06" } }
     spec:
       schedulerName: kai-scheduler
+      priorityClassName: train
       tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
       resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
       containers:
@@ -68,12 +70,13 @@ metadata:
   namespace: kai-lab06
   labels: { kai-scheduler-101/chapter: "06" }
 spec:
-  replicas: 4
+  replicas: 3
   selector: { matchLabels: { app: data-processing } }
   template:
     metadata: { labels: { app: data-processing, kai.scheduler/queue: data-processing, kai-scheduler-101/chapter: "06" } }
     spec:
       schedulerName: kai-scheduler
+      priorityClassName: train
       tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
       resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
       containers:

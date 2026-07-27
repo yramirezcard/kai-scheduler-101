@@ -41,6 +41,12 @@ Display the over-quota demand manifest. The three deployments use the same queue
 cat manifests/06-overquota/overquota-workloads.yaml
 ```
 
+Create the workload priority vocabulary before submitting the deployments. The over-quota Pods use `priorityClassName: train`, which has value `50`; that keeps borrowed over-quota capacity preemptible if a later scheduling action needs to reclaim it.
+
+```bash
+kubectl apply -f manifests/10-priority/priority-classes.yaml
+```
+
 Submit the demand.
 
 ```bash

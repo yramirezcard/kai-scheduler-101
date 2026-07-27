@@ -22,6 +22,12 @@ Inspect the default queue hierarchy created at install time.
 kubectl get queues
 ```
 
+Inspect the resource allocation for the default queue
+
+```bash
+kubectl get queues default-queue -o yaml
+```
+
 Before submitting the first workload, display the manifest. Notice the namespace, DRA `ResourceClaimTemplate`, `schedulerName: kai-scheduler`, and `kai.scheduler/queue` label.
 
 ```bash
@@ -51,6 +57,13 @@ Read scheduling events. Events are the fastest way to understand whether KAI acc
 ```bash
 kubectl describe pod -n kai-lab03 default-queue-dra-pod | sed -n '/Events:/,$p'
 ```
+
+Inspect the updated Status of the default queue. You should see that a GPU was requested and allocated.
+
+```bash
+kubectl describe queue default-queue
+```
+
 
 ## Clean Up
 

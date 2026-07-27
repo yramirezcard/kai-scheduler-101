@@ -1038,9 +1038,9 @@ export function ElasticAnimation() {
   );
   const replica = (key: string, className: string, name: string, required = true) => (
     <g key={key} className={className}>
-      <rect width={74} height={40} rx={4} fill="var(--color-kai)" stroke="var(--color-kai-bright)" strokeWidth="1.5" />
-      <text x="37" y="16" textAnchor="middle" fontSize="8.8" fontWeight="800" fill="#fff">{name}</text>
-      <text x="37" y="30" textAnchor="middle" fontSize="7.4" fontWeight="700" fill="#fff">{required ? "required" : "elastic"}</text>
+      <rect width={58} height={36} rx={3} fill="var(--color-kai)" stroke="var(--color-kai-bright)" strokeWidth="1.5" />
+      <text x="29" y="14" textAnchor="middle" fontSize="7.8" fontWeight="800" fill="#fff">{name}</text>
+      <text x="29" y="27" textAnchor="middle" fontSize="7" fontWeight="700" fill="#fff">{required ? "required" : "elastic"}</text>
     </g>
   );
   const completingWorkload = (x: number, y: number) => (
@@ -1051,7 +1051,7 @@ export function ElasticAnimation() {
   );
 
   return (
-    <Frame title="Elastic Workloads: minSubGroup Starts 3/4, Then Expands to 4/4" h={470}>
+    <Frame title="Elastic Workloads: minSubGroup Starts 3/4, Then Expands to 4/4" h={510}>
       <style>{`
         .elastic-note { font-size: 11px; fill: var(--color-fg-mut); text-anchor: middle; }
         .elastic-phase-a { animation: elastic-phase-a 15s ease-in-out infinite; }
@@ -1068,10 +1068,10 @@ export function ElasticAnimation() {
         @keyframes elastic-phase-c { 0%,60%{opacity:0} 70%,88%{opacity:1} 98%,100%{opacity:0} }
         @keyframes elastic-complete-running { 0%,54%{opacity:1;transform:scale(1)} 62%,88%{opacity:0;transform:scale(.94)} 98%,100%{opacity:1;transform:scale(1)} }
         @keyframes elastic-complete-done { 0%,54%{opacity:0;transform:scale(.96)} 62%,70%{opacity:1;transform:scale(1.08)} 80%,88%{opacity:.1;transform:scale(.88)} 98%,100%{opacity:0;transform:scale(.96)} }
-        @keyframes elastic-r1 { 0%,26%{transform:translate(560px,352px)} 40%,88%{transform:translate(356px,162px)} 98%,100%{transform:translate(560px,352px)} }
-        @keyframes elastic-r2 { 0%,26%{transform:translate(642px,352px)} 40%,88%{transform:translate(430px,162px)} 98%,100%{transform:translate(642px,352px)} }
-        @keyframes elastic-r3 { 0%,26%{transform:translate(724px,352px)} 40%,88%{transform:translate(504px,162px)} 98%,100%{transform:translate(724px,352px)} }
-        @keyframes elastic-r4 { 0%,62%{transform:translate(642px,402px)} 76%,88%{transform:translate(504px,212px)} 98%,100%{transform:translate(642px,402px)} }
+        @keyframes elastic-r1 { 0%,26%{transform:translate(580px,378px)} 40%,88%{transform:translate(504px,178px)} 98%,100%{transform:translate(580px,378px)} }
+        @keyframes elastic-r2 { 0%,26%{transform:translate(650px,378px)} 40%,88%{transform:translate(356px,228px)} 98%,100%{transform:translate(650px,378px)} }
+        @keyframes elastic-r3 { 0%,26%{transform:translate(720px,378px)} 40%,88%{transform:translate(430px,228px)} 98%,100%{transform:translate(720px,378px)} }
+        @keyframes elastic-r4 { 0%,62%{transform:translate(650px,430px)} 76%,88%{transform:translate(430px,178px)} 98%,100%{transform:translate(650px,430px)} }
       `}</style>
 
       <g className="elastic-phase-a">
@@ -1101,13 +1101,13 @@ export function ElasticAnimation() {
       {runningPod(356, 178, "e-old-4")}
       {completingWorkload(430, 178)}
 
-      <rect x="530" y="334" width="300" height="94" rx="7" fill="color-mix(in srgb, var(--color-kai) 10%, transparent)" stroke="var(--color-kai)" strokeDasharray="5 4" />
-      <text x="680" y="350" textAnchor="middle" fontSize="11" fontWeight="800" fill="var(--color-kai)">Queued PodGroup · four replica SubGroups</text>
-      <text x="680" y="443" textAnchor="middle" fontSize="10" fill="var(--color-fg-mut)">replica-4 remains elastic until capacity appears</text>
-      {replica("elastic-replica-1", "elastic-r1", "replica-1")}
-      {replica("elastic-replica-2", "elastic-r2", "replica-2")}
-      {replica("elastic-replica-3", "elastic-r3", "replica-3")}
-      {replica("elastic-replica-4", "elastic-r4", "replica-4", false)}
+      <rect x="552" y="354" width="294" height="112" rx="7" fill="color-mix(in srgb, var(--color-kai) 10%, transparent)" stroke="var(--color-kai)" strokeDasharray="5 4" />
+      <text x="699" y="370" textAnchor="middle" fontSize="11" fontWeight="800" fill="var(--color-kai)">Queued PodGroup · four replica SubGroups</text>
+      <text x="699" y="484" textAnchor="middle" fontSize="10" fill="var(--color-fg-mut)">replica 4 remains elastic until capacity appears</text>
+      {replica("elastic-replica-1", "elastic-r1", "replica 1")}
+      {replica("elastic-replica-2", "elastic-r2", "replica 2")}
+      {replica("elastic-replica-3", "elastic-r3", "replica 3")}
+      {replica("elastic-replica-4", "elastic-r4", "replica 4", false)}
 
       <rect x="54" y="112" width="190" height="118" rx="6" fill="var(--color-panel)" stroke="var(--color-line-2)" />
       <text x="149" y="137" textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-fg)">PodGroup policy</text>
@@ -1115,7 +1115,7 @@ export function ElasticAnimation() {
       <text x="149" y="185" textAnchor="middle" fontSize="11" fill="var(--color-fg-mut)">minSubGroup: 3</text>
       <text x="149" y="206" textAnchor="middle" fontSize="11" fill="var(--color-fg-mut)">each replica minMember: 1</text>
 
-      <text x="450" y="456" className="elastic-note">Elastic scheduling separates the minimum useful gang from optional capacity above the threshold.</text>
+      <text x="450" y="500" className="elastic-note">Elastic scheduling separates the minimum useful gang from optional capacity above the threshold.</text>
     </Frame>
   );
 }

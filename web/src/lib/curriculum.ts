@@ -15,15 +15,15 @@ export const CURRICULUM: Part[] = [
     { slug: "scheduling-queues", title: "Scheduling Queues", blurb: "Create research and platform queues and send DRA workloads to each.", minutes: 3, hasLab: true },
     { slug: "hierarchical-queues", title: "Hierarchical Queues", blurb: "Build a two-level organization and see how parent quota flows to leaves.", minutes: 2, hasLab: true },
   ]},
-  { id: "fairness", title: "Part IV - Fairness & Resource Distribution", subtitle: "Surplus, DRF, reclaim, and historical usage", lessons: [
+  { id: "priority", title: "Part IV - Workload Priority & Preemption", subtitle: "Priority classes and eviction behavior", lessons: [
+    { slug: "priority-classes", title: "Priority Classes", blurb: "Create train, build-preemptible, build, and inference classes.", minutes: 2, hasLab: true },
+    { slug: "intraqueue-preemption", title: "Preemption Within a Queue", blurb: "Use inference-preempts-train to observe intra-queue preemption rules.", minutes: 2, hasLab: true },
+  ]},
+  { id: "fairness", title: "Part V - Fairness & Resource Distribution", subtitle: "Surplus, DRF, reclaim, and historical usage", lessons: [
     { slug: "overquota-distribution", title: "Queue Priority & Over-Quota Distribution", blurb: "Reproduce a 10-GPU surplus example with priority and overQuotaWeight.", minutes: 3, hasLab: true },
     { slug: "fairshare-drf", title: "Fair-Share & DRF", blurb: "Interpret dominant resource fairness and the simulator input.", minutes: 2, hasLab: true },
     { slug: "reclaim-between-queues", title: "Reclaim Between Queues", blurb: "Trigger reclaim and verify quota protection guarantees.", minutes: 2, hasLab: true },
     { slug: "time-based-fairshare", title: "Time-Based Fairshare", blurb: "Enable historical usage accounting and understand prerequisites.", minutes: 2, hasLab: true },
-  ]},
-  { id: "priority", title: "Part V - Workload Priority & Preemption", subtitle: "Priority classes and eviction behavior", lessons: [
-    { slug: "priority-classes", title: "Priority Classes", blurb: "Create train, build-preemptible, build, and inference classes.", minutes: 2, hasLab: true },
-    { slug: "intraqueue-preemption", title: "Preemption Within a Queue", blurb: "Use inference-preempts-train to observe intra-queue preemption rules.", minutes: 2, hasLab: true },
   ]},
   { id: "gang", title: "Part VI - Gang & Elastic Scheduling", subtitle: "All-or-nothing and elastic multi-pod workloads", lessons: [
     { slug: "podgroups-gang", title: "PodGroups & Gang Scheduling", blurb: "Run a minMember job and inspect generated PodGroups.", minutes: 3, hasLab: true },
