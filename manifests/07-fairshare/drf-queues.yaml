@@ -8,6 +8,8 @@ spec:
   displayName: "DRF Resource Pool"
   resources:
     gpu: { quota: 10, limit: 10, overQuotaWeight: 1 }
+    cpu: { quota: -1, limit: -1, overQuotaWeight: 1 }
+    memory: { quota: -1, limit: -1, overQuotaWeight: 1 }
 ---
 apiVersion: scheduling.run.ai/v2
 kind: Queue
@@ -21,6 +23,8 @@ spec:
   priority: 2
   resources:
     gpu: { quota: 2, limit: 10, overQuotaWeight: 2 }
+    cpu: { quota: -1, limit: -1, overQuotaWeight: 1 }
+    memory: { quota: -1, limit: -1, overQuotaWeight: 1 }
 ---
 apiVersion: scheduling.run.ai/v2
 kind: Queue
@@ -34,6 +38,8 @@ spec:
   priority: 2
   resources:
     gpu: { quota: 2, limit: 10, overQuotaWeight: 1 }
+    cpu: { quota: -1, limit: -1, overQuotaWeight: 1 }
+    memory: { quota: -1, limit: -1, overQuotaWeight: 1 }
 ---
 apiVersion: scheduling.run.ai/v2
 kind: Queue
@@ -47,3 +53,5 @@ spec:
   priority: 1
   resources:
     gpu: { quota: 3, limit: 10, overQuotaWeight: 1 }
+    cpu: { quota: -1, limit: -1, overQuotaWeight: 1 }
+    memory: { quota: -1, limit: -1, overQuotaWeight: 1 }

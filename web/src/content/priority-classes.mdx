@@ -15,7 +15,25 @@ KAI includes conventional priority values for common AI workload types. The impo
 
 <PriorityClassDiagram />
 
-Display the PriorityClass manifest.
+A PriorityClass is a cluster-scoped Kubernetes object. The workload later references it by name through `spec.priorityClassName`.
+
+```yaml
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: train
+value: 50
+globalDefault: false
+description: "Preemptible training workload."
+```
+
+Key values:
+
+- `metadata.name`: the value used by Pods, Jobs, or Deployments as `priorityClassName`.
+- `value`: the numeric workload priority. In this lab, `train` uses `50`, which is below the `100` non-preemptible threshold.
+- `globalDefault`: keep this `false` so Pods must explicitly opt in to the class.
+
+Display the Priority Classes in the following manifest.
 
 ```bash
 cat manifests/10-priority/priority-classes.yaml

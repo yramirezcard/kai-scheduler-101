@@ -6,6 +6,22 @@ Only **leaf queues** are used by workloads. Parent queues organize and divide re
 
 <QueueBasicDiagram />
 
+A Queue is a cluster-scoped KAI object. A minimal leaf queue names its parent and declares the GPU resources it can use.
+
+```yaml
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: research
+spec:
+  parentQueue: lab-teams
+  resources:
+    gpu:
+      quota: 4
+      limit: 12
+      overQuotaWeight: 2
+```
+
 ## Queue Attributes: Quota and Limit
 
 | Attribute | Type | Description |
