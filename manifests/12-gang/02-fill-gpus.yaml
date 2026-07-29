@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: fill-all-gpus
+  namespace: kai-lab12
+  labels:
+    kai-scheduler-101/chapter: "12"
+spec:
+  parallelism: 32
+  completions: 32
+  template:
+    metadata:
+      labels:
+        app: fill-all-gpus
+        kai.scheduler/queue: gang-demo
+        kai-scheduler-101/chapter: "12"
+    spec:
+      schedulerName: kai-scheduler
+      priorityClassName: train
+      restartPolicy: Never
+      tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+      resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
+      containers:
+        - name: worker
+          image: ubuntu:22.04
+          command: ["bash", "-lc"]
+          args: ["echo occupying one simulated GPU; sleep 3600"]
+          resources: { claims: [ { name: gpu } ] }

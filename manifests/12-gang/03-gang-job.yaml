@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gang-four
+  namespace: kai-lab12
+  labels:
+    kai-scheduler-101/chapter: "12"
+  annotations:
+    kai.scheduler/batch-min-member: "4"
+spec:
+  parallelism: 4
+  completions: 4
+  template:
+    metadata:
+      labels:
+        app: gang-four
+        kai.scheduler/queue: gang-demo
+        kai-scheduler-101/chapter: "12"
+    spec:
+      schedulerName: kai-scheduler
+      priorityClassName: train
+      restartPolicy: Never
+      tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+      resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
+      containers:
+        - name: worker
+          image: ubuntu:22.04
+          command: ["bash", "-lc"]
+          args: ["echo gang worker; sleep 3600"]
+          resources: { claims: [ { name: gpu } ] }

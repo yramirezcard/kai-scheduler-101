@@ -1,62 +1,130 @@
 # PodGroups & Gang Scheduling
 
-Distributed AI workloads often need several Pods to start together. If one worker starts without the others, it may waste capacity, hang on rendezvous, or fail training. Gang scheduling gives KAI a larger scheduling unit than a single Pod.
+Distributed AI workloads often need several Pods to start together. If one worker starts without the others, it may waste capacity while waiting for its peers, block distributed initialization, or fail training. Gang scheduling gives KAI a larger scheduling unit than a single Pod.
 
 <GangSchedulingAnimation />
 
-Display the gang Job manifest. The annotation `kai.scheduler/batch-min-member: "4"` tells KAI the minimum number of Pods that must be schedulable together.
+This hands-on starts by filling the 32 simulated GPUs in the lab cluster. Then you submit a four-Pod gang and confirm that it stays pending while there are no free GPUs. Finally, you delete the filler workload and confirm that the pending gang can be scheduled once four GPUs become available together.
+
+Display the setup manifest. The queue allows the full 32-GPU cluster to be used and sets `limit: 36` so the gang is not blocked by queue policy; it is blocked by actual lack of free GPU capacity.
 
 ```bash
-cat manifests/12-gang/gang-job.yaml
+cat manifests/12-gang/01-setup.yaml
 ```
 
-Apply the gang workload.
+Create the namespace, ResourceClaimTemplate, and Queue.
 
 ```bash
-kubectl apply -f manifests/12-gang/gang-job.yaml
+kubectl apply -f manifests/12-gang/01-setup.yaml
 ```
 
-List the Job.
+Apply the PriorityClass manifest used by the filler and gang Pods.
 
 ```bash
-kubectl get jobs -n kai-lab12
+kubectl apply -f manifests/10-priority/priority-classes.yaml
 ```
 
-List PodGroups created for the namespace. KAI's podgrouper turns workload ownership into scheduling groups.
+Display the filler workload. It creates 32 one-GPU Pods, which should occupy every simulated GPU in the lab cluster.
+
+```bash
+cat manifests/12-gang/02-fill-gpus.yaml
+```
+
+Create the filler workload first.
+
+```bash
+kubectl apply -f manifests/12-gang/02-fill-gpus.yaml
+```
+
+Confirm the filler Pods are scheduled across the simulated nodes.
+
+```bash
+kubectl get pods -n kai-lab12 -l app=fill-all-gpus -o wide
+```
+
+Display the gang Job manifest. The annotation `kai.scheduler/batch-min-member: "4"` tells KAI that four Pods must be schedulable together before the workload should start.
+
+```bash
+cat manifests/12-gang/03-gang-job.yaml
+```
+
+Create the gang workload while the cluster is already full.
+
+```bash
+kubectl apply -f manifests/12-gang/03-gang-job.yaml
+```
+
+List the gang Pods. They should remain pending because KAI cannot satisfy the batch minimum while all 32 GPUs are occupied.
+
+```bash
+kubectl get pods -n kai-lab12 -l app=gang-four -o wide
+```
+
+List PodGroups created for the namespace. KAI's podgrouper turns workload ownership into scheduling groups, and the gang PodGroup is where the minimum member requirement becomes visible.
 
 ```bash
 kubectl get podgroups -n kai-lab12
 ```
 
-List Pods and node placement.
+Describe the PodGroups to inspect scheduling status and conditions.
 
 ```bash
-kubectl get pods -n kai-lab12 -o wide
+kubectl describe podgroups -n kai-lab12
 ```
 
-Read recent events if the gang is pending. Pending can be correct when `minMember` cannot be satisfied.
+Read recent events in the namespace. Pending is expected here: the gang minimum prevents KAI from starting only one, two, or three workers.
 
 ```bash
-kubectl get events -n kai-lab12 --sort-by=.lastTimestamp | tail -30
+kubectl get events -n kai-lab12 --sort-by=.lastTimestamp
+```
+
+Inspect scheduler logs while the gang is pending.
+
+```bash
+kubectl logs -n kai-scheduler deploy/kai-scheduler-default --tail=200
+```
+
+Delete the filler workload to free the 32 GPUs.
+
+```bash
+kubectl delete -f manifests/12-gang/02-fill-gpus.yaml
+```
+
+Watch the gang Pods again. Once capacity is free, the pending four-Pod gang should schedule together because its batch minimum can now be satisfied.
+
+```bash
+kubectl get pods -n kai-lab12 -l app=gang-four -o wide
+```
+
+Inspect scheduler logs again to correlate the successful scheduling decision with the changed cluster state.
+
+```bash
+kubectl logs -n kai-scheduler deploy/kai-scheduler-default --tail=200
 ```
 
 ## Clean Up
 
-Delete the gang namespace. This removes the Job, Pods, ResourceClaims, and generated PodGroups from the scenario.
+Delete the gang workload.
+
+```bash
+kubectl delete -f manifests/12-gang/03-gang-job.yaml --ignore-not-found
+```
+
+Delete the setup manifest. This removes the namespace, ResourceClaimTemplate, and queue used by the scenario.
+
+```bash
+kubectl delete -f manifests/12-gang/01-setup.yaml --ignore-not-found
+```
+
+If the namespace is still terminating, explicitly ask Kubernetes to remove it.
 
 ```bash
 kubectl delete namespace kai-lab12 --ignore-not-found
 ```
 
-Delete the cluster-scoped gang queue after the namespace is gone.
-
-```bash
-kubectl delete queue gang-demo --ignore-not-found
-```
-
 ## What Just Happened
 
-You moved from Pod scheduling to group scheduling. KAI can now decide "start enough workers together" instead of allowing one worker to occupy a GPU while the rest of the job waits.
+You moved from Pod scheduling to group scheduling. KAI held the four-Pod gang while the cluster had no free GPUs, then scheduled it after enough capacity became available. The important behavior is that KAI did not start a partial distributed job: `batch-min-member: "4"` made four feasible workers the minimum acceptable scheduling decision.
 
 ## Sources
 
