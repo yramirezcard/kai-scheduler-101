@@ -6,7 +6,10 @@ metadata:
     kai-scheduler-101/chapter: "09"
 spec:
   partitionLabelValue: default
-  args:
-    timeBasedFairShare:
-      enabled: true
-      halfLifeTimeSeconds: 3600
+  kValue: 0.5
+  usageDBConfig:
+    clientType: prometheus
+    usageParams:
+      windowSize: 1w
+      windowType: sliding
+      halfLifePeriod: 1h

@@ -1,5 +1,15 @@
 # Lab Environment
 
+This lab runs on a CPU-only Brev VM, but it gives KAI a realistic GPU-shaped Kubernetes environment to schedule against. The Kubernetes distribution is **K3s**, a lightweight distribution that is well suited for a single-VM hands-on lab. K3s provides the real Kubernetes API server, controller manager, scheduler, kubelet, and storage/networking basics.
+
+Because the VM does not have physical GPUs or many real worker machines, the lab uses **KWOK** to simulate multiple Kubernetes Nodes. Those fake Nodes behave like schedulable cluster capacity from the API server's point of view, which lets the later topology, placement, and queue examples reason about more than one node.
+
+The lab also installs **fake-gpu-operator** to simulate GPU devices on those KWOK-managed Nodes. It exposes fake GPU capacity and DRA objects so workloads can request GPUs through Kubernetes APIs without needing real accelerators.
+
+KAI Scheduler is not installed yet. You will install it as part of the lab, then inspect how KAI uses queues, PodGroups, priorities, DRA claims, and simulated GPU capacity to make scheduling decisions.
+
+<LabEnvironmentStack />
+
 Before installing KAI, inspect the cluster you have been given. The point of this chapter is to separate the base Kubernetes environment from the KAI control plane you will install later.
 
 The first command confirms that `kubectl` can reach the k3s API server.
@@ -13,37 +23,6 @@ List all nodes with extra detail. You should see the k3s control-plane node plus
 ```bash
 kubectl get nodes -o wide
 ```
-
-Show the fake GPU-related labels and allocatable GPU column. This tells you whether the simulated node pool is visible to Kubernetes.
-
-```bash
-kubectl get nodes -o custom-columns='NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu,POOL:.metadata.labels.run\.ai/simulated-gpu-node-pool'
-```
-
-Check Helm. KAI, fake-gpu-operator, and later observability tooling are installed with Helm.
-
-```bash
-helm version
-```
-
-List every Pod in the cluster. At this point you are looking for Kubernetes and simulation components, not KAI.
-
-```bash
-kubectl get pods -A
-```
-
-Confirm KAI is not installed yet. The namespace should be missing before the installation chapter.
-
-```bash
-kubectl get pods -n kai-scheduler
-```
-
-Confirm the stock scheduler is running. This is the baseline scheduler that k3s installed.
-
-```bash
-kubectl get pods -n kube-system -l component=kube-scheduler
-```
-
 
 Observe the count of KWOK nodes. Four fake GPU nodes are enough for the first half of the lab; a later topology chapter expands the fleet to 24 nodes.
 
@@ -72,6 +51,14 @@ kubectl get resourceslices -o json \
     ' \
   | column -t
 ```
+
+
+List every Pod in the cluster. At this point you are looking for Kubernetes and simulation components, not KAI.
+
+```bash
+kubectl get pods -A
+```
+
 
 ## What Just Happened
 

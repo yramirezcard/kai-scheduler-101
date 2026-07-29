@@ -70,7 +70,7 @@ metadata:
   namespace: kai-lab06
   labels: { kai-scheduler-101/chapter: "06" }
 spec:
-  replicas: 3
+  replicas: 4
   selector: { matchLabels: { app: data-processing } }
   template:
     metadata: { labels: { app: data-processing, kai.scheduler/queue: data-processing, kai-scheduler-101/chapter: "06" } }

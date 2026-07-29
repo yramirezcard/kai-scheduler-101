@@ -1,5 +1,7 @@
 # Queue Priority & Over-Quota Distribution
 
+Queue priority and workload priority are different systems. While workload priority controls ordering and preemption inside one queue, Queue priority controls surplus distribution between queues. 
+
 KAI's fair-share algorithm starts by separating **deserved quota** from **over-quota demand**. A queue is treated as **in-quota** while its allocated resources are below its configured quota. In that phase, queue priority is intentionally ignored: every queue should be able to receive the resources it deserves.
 
 After deserved quota is satisfied, any remaining capacity becomes **surplus**. Surplus is where queue priority and `overQuotaWeight` matter. The scheduler considers queues by **over-quota priority** first. If several queues are at the same priority tier, `overQuotaWeight` determines the proportional split within that tier.
@@ -35,13 +37,14 @@ Apply the queues.
 kubectl apply -f manifests/06-overquota/priority-weighted-queues.yaml
 ```
 
-Display the over-quota demand manifest. The three deployments use the same queue names as the diagram: `vision-team`, `llm-team`, and `data-processing`. Each deployment asks for more replicas than its guaranteed quota can cover, which creates visible over-quota pressure.
+Display the over-quota demand manifest. The three deployments use the same queue names as the diagram: `vision-team`, `llm-team`, and `data-processing`. 
+Each deployment asks for more replicas than its guaranteed quota can cover, which creates visible over-quota pressure.
 
 ```bash
 cat manifests/06-overquota/overquota-workloads.yaml
 ```
 
-Create the workload priority vocabulary before submitting the deployments. The over-quota Pods use `priorityClassName: train`, which has value `50`; that keeps borrowed over-quota capacity preemptible if a later scheduling action needs to reclaim it.
+Notice that the over-quota Pods use `priorityClassName: train`, which has value `50`; that keeps borrowed over-quota capacity preemptible if a later scheduling action needs to reclaim it.
 
 ```bash
 kubectl apply -f manifests/10-priority/priority-classes.yaml

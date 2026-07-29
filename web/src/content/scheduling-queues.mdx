@@ -45,7 +45,7 @@ Create the parent queue and two leaf queues.
 kubectl apply -f manifests/04-queues/research-platform-queues.yaml
 ```
 
-Display the workload manifest. Notice that both deployments use DRA claims, `schedulerName: kai-scheduler`, and a queue label.
+Display the workload manifest. Notice that both deployments use DRA claims, `schedulerName: kai-scheduler`, and the queue label `kai.scheduler/queue` which assigns every workload to different queue.
 
 ```bash
 cat manifests/04-queues/team-dra-workloads.yaml

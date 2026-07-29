@@ -31,7 +31,7 @@ In both strategies, KAI preserves relative ordering. A queue that had the lowest
 
 ## In-Quota Protection Guarantee
 
-The diagram below maps to this lab's queue manifests. `reclaim-low` borrowed 4 extra GPUs while `reclaim-high` was idle. When `reclaim-high` submits demand, KAI can reclaim from `reclaim-low`'s over-quota zone. `reclaim-low`'s in-quota resources are never touched.
+The diagram below shows an example of reclaim between queues. `reclaim-low` borrowed 4 extra GPUs while `reclaim-high` was idle. When `reclaim-high` submits demand, KAI can reclaim from `reclaim-low`'s over-quota zone. `reclaim-low`'s in-quota resources are never touched.
 
 <ReclaimAnimation />
 
@@ -65,13 +65,85 @@ Describe the low-priority queue and compare its policy.
 kubectl describe queue reclaim-low
 ```
 
-Search recent events for any reclaim-related scheduling decisions.
+Display the workload that lets `reclaim-low` borrow above its guaranteed quota. The queue has quota `4` and limit `8`; this deployment asks for `8` one-GPU replicas, so the last four replicas are over-quota. The Pods use `priorityClassName: train`, which keeps those borrowed allocations preemptible.
 
 ```bash
-kubectl get events -A --sort-by=.lastTimestamp | grep -i reclaim | tail -20 || true
+cat manifests/08-reclaim/reclaim-low-overquota-workload.yaml
+```
+
+Create the preemptible training priority class. This is safe to run even if the earlier priority chapter already created it.
+
+```bash
+kubectl apply -f manifests/10-priority/priority-classes.yaml
+```
+
+Submit the `reclaim-low` borrower workload.
+
+```bash
+kubectl apply -f manifests/08-reclaim/reclaim-low-overquota-workload.yaml
+```
+
+Inspect the `reclaim-low` Pods. Give the scheduler a few seconds; the expected shape is that `reclaim-low` can run above its quota while `reclaim-high` has no demand.
+
+```bash
+kubectl get pods -n kai-lab08 -l app=reclaim-low-borrower -o wide
+```
+
+Describe `reclaim-low` after its workload starts. Look for status fields showing requested or allocated GPU resources above the queue's quota.
+
+```bash
+kubectl describe queue reclaim-low
+```
+
+Display the workload that creates reclaim pressure from `reclaim-high`. This deployment asks for four GPUs, matching `reclaim-high`'s guaranteed quota.
+
+```bash
+cat manifests/08-reclaim/reclaim-high-demand-workload.yaml
+```
+
+Submit the `reclaim-high` workload.
+
+```bash
+kubectl apply -f manifests/08-reclaim/reclaim-high-demand-workload.yaml
+```
+
+Inspect all Pods in the reclaim namespace. The expected behavior is that `reclaim-high` gets capacity and KAI may evict or move `reclaim-low` Pods that were consuming over-quota resources.
+
+```bash
+kubectl get pods -n kai-lab08 -o wide -L kai.scheduler/queue
+```
+
+Describe `reclaim-high` and confirm it now has demand against its guaranteed quota.
+
+```bash
+kubectl describe queue reclaim-high
+```
+
+Read namespace events for scheduling and eviction messages related to the reclaim scenario.
+
+```bash
+kubectl get events -n kai-lab08 --sort-by=.lastTimestamp
+```
+
+Read recent scheduler logs and look for reclaim-related scheduling decisions.
+
+```bash
+kubectl logs -n kai-scheduler deploy/kai-scheduler-default --tail=200
 ```
 
 ## Clean Up
+
+Delete the `reclaim-high` workload first.
+
+```bash
+kubectl delete -f manifests/08-reclaim/reclaim-high-demand-workload.yaml --ignore-not-found
+```
+
+Delete the `reclaim-low` workload and namespace resources.
+
+```bash
+kubectl delete -f manifests/08-reclaim/reclaim-low-overquota-workload.yaml --ignore-not-found
+```
 
 Delete the reclaim queues. They are cluster-scoped and appear in queue listings even when idle.
 

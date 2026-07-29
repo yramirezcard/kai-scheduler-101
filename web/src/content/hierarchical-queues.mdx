@@ -28,6 +28,12 @@ List queues to see all layers together.
 kubectl get queues
 ```
 
+Describe the upper layer `ai-org`. Look at the GPU quota and its children.
+
+```bash
+kubectl describe queue ai-org
+```
+
 Describe the middle layer. Look for `parentQueue: ai-org` and the GPU quota that this department divides among its children.
 
 ```bash

@@ -14,13 +14,27 @@ The animation below uses only two queues. Vision runs first and accumulates GPU-
 
 <TimeFairshareAnimation />
 
-Display the example `SchedulingShard`. Look under `spec.args.timeBasedFairShare`: `enabled: true` turns the feature on for this shard, and `halfLifeTimeSeconds: 3600` sets a one-hour decay half-life for historical usage.
+Time-based fairshare is not enabled with a `spec.args.timeBasedFairShare.enabled` flag. KAI uses historical usage only when the scheduler can read usage data, so the documented setup has two parts: enable Prometheus collection in the KAI `Config`, then configure the `SchedulingShard` with `usageDBConfig`. The optional `kValue` controls how strongly historical usage affects over-quota fair-share calculations, and `halfLifePeriod` controls time decay. If `halfLifePeriod` is omitted, time decay is off by default.
+
+First, display the example `SchedulingShard` configuration. The important fields are `spec.usageDBConfig.clientType: prometheus`, `spec.usageDBConfig.usageParams`, and `spec.kValue`.
 
 ```bash
 cat manifests/09-time-fairshare/scheduling-shard-time-fairshare.yaml
 ```
 
-Apply the example shard.
+Enable Prometheus support in the KAI config. This requires Prometheus support to be available in the cluster, as described in the metrics and observability chapter.
+
+```bash
+kubectl patch config kai-config --type merge -p '{"spec":{"prometheus":{"enabled":true}}}'
+```
+
+Inspect the KAI config so you can confirm the Prometheus setting and any status conditions.
+
+```bash
+kubectl describe config kai-config
+```
+
+Apply the example shard configuration.
 
 ```bash
 kubectl apply -f manifests/09-time-fairshare/scheduling-shard-time-fairshare.yaml
@@ -48,7 +62,7 @@ kubectl delete schedulingshard time-fairshare-demo --ignore-not-found
 
 ## What Just Happened
 
-You saw where historical fairness is configured and how to reason about it. The lab keeps the hands-on portion light because meaningful time-based behavior requires elapsed time, persistent usage history, Prometheus-backed accounting, and enough workload churn to make the oscillation visible.
+You saw where historical fairness is configured and how to reason about it.  Without `usageDBConfig`, the scheduler uses normal point-in-time fair-share behavior. With Prometheus-backed usage data configured, historical usage becomes part of over-quota allocation and reclaim decisions. The lab keeps the hands-on portion light because meaningful time-based behavior requires elapsed time, persistent usage history, Prometheus-backed accounting, and enough workload churn to make the oscillation visible.
 
 ## Sources
 

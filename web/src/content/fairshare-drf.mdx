@@ -56,6 +56,12 @@ Read recent events for scheduling explanations.
 kubectl get events -n kai-lab07 --sort-by=.lastTimestamp | tail -30
 ```
 
+Look for scheduler logs for details on scheduling decisions.
+
+```bash
+kubectl logs -n kai-scheduler deploy/kai-scheduler-default --tail=80
+```
+
 ## Clean Up
 
 Delete the DRF workloads first. They create Pods and DRA claims that can consume simulated resources.

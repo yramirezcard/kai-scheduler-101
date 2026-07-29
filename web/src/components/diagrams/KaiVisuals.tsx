@@ -134,6 +134,70 @@ function Frame({
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
+   Chapter 1 · Lab Environment
+   Shows the local Brev/K3s/KWOK/fake GPU stack before KAI is installed
+   ══════════════════════════════════════════════════════════════════════════ */
+
+export function LabEnvironmentStack() {
+  const layer = (
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    label: string,
+    sub?: string,
+    tone: "pink" | "teal" | "gold" = "pink",
+  ) => {
+    const stroke =
+      tone === "teal"
+        ? "var(--color-accent)"
+        : tone === "gold"
+        ? "#f59e0b"
+        : "var(--color-kai)";
+    const fill =
+      tone === "teal"
+        ? "color-mix(in srgb, var(--color-accent) 14%, transparent)"
+        : tone === "gold"
+        ? "color-mix(in srgb, #f59e0b 14%, transparent)"
+        : "color-mix(in srgb, var(--color-kai) 12%, transparent)";
+    return (
+      <g>
+        <rect x={x} y={y} width={w} height={h} rx={5} fill={fill} stroke={stroke} strokeWidth="1.4" />
+        <text x={x + w / 2} y={y + (sub ? h / 2 - 3 : h / 2 + 4)} textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-fg)">
+          {label}
+        </text>
+        {sub && (
+          <text x={x + w / 2} y={y + h / 2 + 14} textAnchor="middle" fontSize="9.5" fill="var(--color-fg-mut)">
+            {sub}
+          </text>
+        )}
+      </g>
+    );
+  };
+
+  return (
+    <Frame title="Lab Environment Stack" h={390}>
+      <rect x="64" y="74" width="772" height="276" rx="8" fill="var(--color-panel)" stroke="var(--color-line-2)" />
+
+      {layer(280, 96, 340, 52, "KAI Scheduler", undefined, "pink")}
+
+      <rect x="112" y="178" width="676" height="100" rx="7" fill="color-mix(in srgb, var(--color-accent) 7%, transparent)" stroke="var(--color-line-2)" strokeDasharray="5 4" />
+      <text x="450" y="202" textAnchor="middle" fontSize="11" fontWeight="800" fill="var(--color-accent)">
+        Simulation layer
+      </text>
+      {layer(150, 222, 250, 40, "KWOK", "simulates Kubernetes Nodes", "teal")}
+      {layer(500, 222, 250, 40, "fake GPU operator", "simulates GPUs and DRA objects", "teal")}
+
+      {layer(140, 304, 620, 40, "K3s", "lightweight Kubernetes distribution", "gold")}
+
+      <Arrow x1={450} y1={304} x2={450} y2={278} />
+      <Arrow x1={275} y1={222} x2={395} y2={148} />
+      <Arrow x1={625} y1={222} x2={505} y2={148} />
+    </Frame>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
    Chapter 1 · KAI Overview
    Shows the contrast: default scheduler (single-pod fit) vs KAI (multi-concept)
    ══════════════════════════════════════════════════════════════════════════ */

@@ -2,11 +2,7 @@
 
 Preemption is intra-queue enforcement. Once resources have reached a queue, workload priority decides which workloads run first and which already-running workloads can be evicted.
 
-KAI uses the workload's `priorityClassName` for three related decisions:
-
-- **Scheduling order**: higher-priority workloads move ahead of lower-priority workloads inside the same queue.
-- **Preemptibility**: by default, priority values below `100` are preemptible, while priority values `100` or higher are non-preemptible.
-- **Preemption**: a higher-priority workload can evict a lower-priority preemptible workload, but only within the same queue.
+KAI uses the workload's `priorityClassName` to decide on its preemptibility
 
 For preemption to occur, all of these rules must be true:
 
