@@ -32,8 +32,8 @@ export const CURRICULUM: Part[] = [
   ]},
   { id: "cycle-placement", title: "Part VII - The Scheduling Cycle & Advanced Placement", subtitle: "Actions, placement policies, shards, and topology", lessons: [
     { slug: "scheduling-cycle", title: "Inside a Scheduling Cycle", blurb: "Read events from Allocate, Consolidate, Reclaim, Preempt, and StaleGangEviction.", minutes: 2, hasLab: true },
-    { slug: "binpack-spread", title: "Bin-Packing vs Spread & Consolidation", blurb: "Apply placement shards and compare node placement.", minutes: 2, hasLab: true },
     { slug: "scheduling-shards", title: "Scheduling Shards", blurb: "Partition scheduling behavior by node labels.", minutes: 2, hasLab: true },
+    { slug: "binpack-spread", title: "Bin-Packing vs Spread & Consolidation", blurb: "Apply placement shards and compare node placement.", minutes: 2, hasLab: true },
     { slug: "topology-aware-scheduling", title: "Topology-Aware Scheduling", blurb: "Expand to 24 simulated nodes and enforce rack locality.", minutes: 4, hasLab: true },
   ]},
   { id: "gpu", title: "Part VIII - Managing GPU Resources", subtitle: "GPU sharing and Dynamic Resource Allocation", lessons: [
