@@ -4,19 +4,25 @@ Scheduling shards partition a cluster into independent scheduling domains. Each 
 
 <ShardAnimation />
 
-Display the fake H100 and L40S node pools. This makes the shard boundary explicit in the lab.
+Start by inspecting the four KWOK nodes created during setup. The lab already labels two nodes as H100 and two nodes as L40S, so this chapter reuses the existing simulated cluster instead of creating new nodes.
 
 ```bash
-cat manifests/17-shards/shard-node-pools.yaml
+kubectl get nodes -L nvidia.com/gpu.machine
 ```
 
-Apply the fake shard node pools.
+List nodes that match the simulated H100 label.
 
 ```bash
-kubectl apply -f manifests/17-shards/shard-node-pools.yaml
+kubectl get nodes -l nvidia.com/gpu.machine=NVIDIA-DGX-H100
 ```
 
-Display the H100 shard manifest. This shard targets nodes, queues, and PodGroups labeled `nvidia.com/gpu.machine: NVIDIA-DGX-H100`.
+List nodes that match the simulated L40S label.
+
+```bash
+kubectl get nodes -l nvidia.com/gpu.machine=NVIDIA-L40S
+```
+
+Display the H100 shard manifest. This shard targets nodes, queues, and PodGroups labeled `nvidia.com/gpu.machine: NVIDIA-DGX-H100`. Creating it causes KAI to reconcile a scheduler deployment for the H100 partition.
 
 ```bash
 cat manifests/17-shards/scheduling-shard-h100.yaml
@@ -40,6 +46,12 @@ Apply the L40S shard.
 kubectl apply -f manifests/17-shards/scheduling-shard-l40s.yaml
 ```
 
+List scheduler deployments. Each shard gets its own scheduler deployment and therefore its own scheduling cycle over the matching partition.
+
+```bash
+kubectl get deployments -n kai-scheduler
+```
+
 Read the H100 shard resource.
 
 ```bash
@@ -50,18 +62,6 @@ Read the L40S shard resource.
 
 ```bash
 kubectl get schedulingshard l40s-shard -o yaml
-```
-
-List nodes that match the simulated H100 label.
-
-```bash
-kubectl get nodes -l nvidia.com/gpu.machine=NVIDIA-DGX-H100
-```
-
-List nodes that match the simulated L40S label.
-
-```bash
-kubectl get nodes -l nvidia.com/gpu.machine=NVIDIA-L40S
 ```
 
 Display the H100 workload. Its queue and Job labels match the H100 shard partition.
@@ -76,6 +76,18 @@ Apply the H100 workload.
 kubectl apply -f manifests/17-shards/h100-workload.yaml
 ```
 
+List H100 Pods and confirm they are placed only on the H100 node set.
+
+```bash
+kubectl get pods -n kai-lab17-h100 -o wide
+```
+
+Inspect the H100 shard scheduler logs after deploying the H100 workload. This log stream belongs to the scheduler deployment for the H100 shard.
+
+```bash
+kubectl logs -n kai-scheduler deployment/kai-scheduler-h100-shard --tail=120
+```
+
 Display the L40S workload. Its queue and Job labels match the L40S shard partition.
 
 ```bash
@@ -88,22 +100,16 @@ Apply the L40S workload.
 kubectl apply -f manifests/17-shards/l40s-workload.yaml
 ```
 
-List H100 Pods and confirm they are placed only on the H100 node set.
-
-```bash
-kubectl get pods -n kai-lab17-h100 -o wide
-```
-
 List L40S Pods and confirm they are placed only on the L40S node set.
 
 ```bash
 kubectl get pods -n kai-lab17-l40s -o wide
 ```
 
-List all scheduler deployments. A real shard configuration may create separate scheduler instances for partitions.
+Inspect the L40S shard scheduler logs after deploying the L40S workload. This log stream belongs to the scheduler deployment for the L40S shard.
 
 ```bash
-kubectl get deploy -n kai-scheduler
+kubectl logs -n kai-scheduler deployment/kai-scheduler-l40s-shard --tail=120
 ```
 
 ## Clean Up
@@ -126,15 +132,9 @@ Delete the shard-specific queues.
 kubectl delete queue h100-research l40s-inference --ignore-not-found
 ```
 
-Delete the fake shard nodes.
-
-```bash
-kubectl delete node shard-h100-01 shard-h100-02 shard-l40s-01 shard-l40s-02 --ignore-not-found
-```
-
 ## What Just Happened
 
-You created two node-pool-specific scheduler configurations. The H100 shard and L40S shard each had its own node set, queue labels, workload labels, and action configuration. That isolation is the main value of shards: rules such as placement, queue depth, min runtime, or enabled actions can differ by accelerator pool without blending queues and PodGroups across pools.
+You created two node-pool-specific scheduler configurations over the four existing KWOK nodes. The H100 shard watched the two H100-labeled nodes, queues, and workloads; the L40S shard watched the two L40S-labeled nodes, queues, and workloads. That isolation is the main value of shards: each shard gets its own scheduler deployment, scheduling cycle, node partition, queue labels, workload labels, and action configuration.
 
 ## Sources
 

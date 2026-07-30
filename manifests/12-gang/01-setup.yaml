@@ -24,4 +24,4 @@ metadata:
   labels: { kai-scheduler-101/chapter: "12" }
 spec:
   resources:
-    gpu: { quota: 32, limit: 36, overQuotaWeight: 1 }
+    gpu: { quota: 12, limit: 16, overQuotaWeight: 1 }

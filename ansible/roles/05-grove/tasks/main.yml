@@ -1,0 +1,21 @@
+---
+- name: Install Grove operator from OCI Helm chart
+  ansible.builtin.shell: |
+    set -euo pipefail
+    export KUBECONFIG="{{ repo_root }}/kubeconfig"
+
+    version_args=()
+    if [[ -n "{{ grove_version }}" ]]; then
+      version_args=(--version "{{ grove_version }}")
+    fi
+
+    helm upgrade -i grove oci://ghcr.io/ai-dynamo/grove/grove-charts \
+      -n "{{ grove_namespace }}" --create-namespace \
+      "${version_args[@]}"
+
+    kubectl -n "{{ grove_namespace }}" rollout status deployment --timeout=180s || true
+    kubectl get crd podcliquesets.grove.io podcliquescalinggroups.grove.io podcliques.grove.io podgangs.scheduler.grove.io
+  args:
+    executable: /bin/bash
+  become: false
+  changed_when: false

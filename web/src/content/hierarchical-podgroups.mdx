@@ -11,31 +11,72 @@ KAI's hierarchical PodGroup design keeps the root all-or-nothing scheduling cont
 - A Pod is assigned to a leaf SubGroup with the `kai.scheduler/subgroup-name` label.
 - Topology constraints can be applied at the root, mid-level, or leaf level so tightly coupled roles can be placed together without forcing the whole serving stack onto one node.
 
-Grove builds on the same motivation from the serving side. It provides Kubernetes CRDs for AI inference systems where roles such as router, prefill, decode, leader, and worker are declared as one managed object. Grove's README describes four core concepts: `PodClique` for a role-specific group of Pods, `PodCliqueScalingGroup` for cliques that scale and schedule together, `PodCliqueSet` as the top-level serving system, and `PodGang` as the scheduler-facing gang unit.
+A minimal hierarchical `PodGroup` shape looks like this. The root needs all three direct children, while `prefill` and `decode` are mid-level groups that each require one child group to be satisfied.
 
-This lab does not install the real Grove operator. Instead, it installs small lab-only CRDs so you can inspect Grove-shaped objects, then applies an example that mimics a controller translating a disaggregated serving topology into a KAI hierarchical PodGroup.
-
-<HierarchicalPodGroupAnimation />
-
-Display the lab-only Grove CRDs. These CRDs are intentionally tiny, but the kinds match the concepts you should recognize in a real Grove installation.
-
-```bash
-cat manifests/14-hierarchical-podgroups/01-grove-crds.yaml
+```yaml
+apiVersion: scheduling.run.ai/v2
+kind: PodGroup
+metadata:
+  name: disaggregated-serving
+  namespace: kai-lab14
+spec:
+  queue: grove-demo
+  minSubGroup: 3
+  subGroups:
+    - name: router
+      minMember: 1
+    - name: prefill
+      minSubGroup: 1
+    - name: prefill-workers
+      parent: prefill
+      minMember: 2
+    - name: decode
+      minSubGroup: 1
+    - name: decode-workers
+      parent: decode
+      minMember: 2
 ```
 
-Apply the Grove CRDs so Kubernetes can store the mock Grove resources used in this chapter.
+The matching Pods would carry `kai.scheduler/subgroup-name: router`, `prefill-workers`, or `decode-workers` so KAI can attach each Pod to the right leaf in the hierarchy.
+
+## Introducing Grove
+
+Grove is a Kubernetes API for describing AI inference systems as one declarative workload instead of a loose collection of Deployments, Services, startup scripts, and scheduler-specific annotations. Its motivation is very practical: modern inference stacks are rarely just one Pod. A disaggregated serving system can have a router, prefill components, decode components, leaders, workers, and tightly coupled multi-node model replicas. Those pieces often need to scale together, start in a controlled order, and land with enough topology awareness that the serving path is usable.
+
+Grove gives that application shape a Kubernetes-native API. A `PodCliqueSet` is the top-level serving system. A `PodClique` represents one role, such as a router or decode worker. A `PodCliqueScalingGroup` ties multiple cliques together so they scale as one unit. A scheduler-facing `PodGang` represents the group scheduling contract that says "these Pods only make sense if the required roles can start together."
+
+That is where KAI fits. Grove owns the inference topology and reconciles the application-facing CRDs into Pods and gang scheduling objects. KAI remains the scheduler backend that evaluates queues, priority, fairness, topology, and placement when those Pods are submitted with `schedulerName: kai-scheduler`. In other words, Grove describes what the serving system is; KAI decides when and where it can run.
+
+<GroveComponentsDiagram />
+
+The diagram above shows the use case from the hands-on manifest. The `PodCliqueSet` has two complete replicas for availability. Within each replica, the prefill and decode components are modeled as `PodCliqueScalingGroup`s so their leader and worker cliques are treated as tightly coupled units. Grove turns this application structure into scheduler-facing objects, while KAI handles the placement decision using the queue and scheduler fields on the generated Pods.
+
+
+Confirm the Grove operator is installed. The bootstrap installs Grove into `grove-system` by default.
 
 ```bash
-kubectl apply -f manifests/14-hierarchical-podgroups/01-grove-crds.yaml
+kubectl get pods -n grove-system
 ```
 
-Inspect the CRDs that were registered. This confirms the API now knows about `PodCliqueSet`, `PodCliqueScalingGroup`, `PodClique`, and `PodGang`.
+Inspect the Grove CRDs registered by the Helm chart. These are the APIs the operator watches and reconciles.
 
 ```bash
-kubectl get crd podcliquesets.grove.io podcliquescalinggroups.grove.io podcliques.grove.io podgangs.grove.io
+kubectl get crd podcliquesets.grove.io podcliquescalinggroups.grove.io podcliques.grove.io podgangs.scheduler.grove.io
 ```
 
-Display the disaggregated serving manifest. Notice that it includes both Grove-shaped objects and the KAI `PodGroup` that mimics the scheduler-facing output.
+Read the top-level `PodCliqueSet` CRD. This is the user-facing object that describes a complete inference system.
+
+```bash
+kubectl describe crd podcliquesets.grove.io
+```
+
+Read the scheduler-facing `PodGang` CRD. Grove creates `PodGang` objects so the scheduler can reason about gang scheduling for the generated Pods.
+
+```bash
+kubectl describe crd podgangs.scheduler.grove.io
+```
+
+Display the disaggregated serving manifest. This manifest creates a KAI queue and a Grove `PodCliqueSet` with five roles: router, prefill leader, prefill workers, decode leader, and decode workers. It sets two top-level `PodCliqueSet` replicas for availability, then groups prefill and decode with `PodCliqueScalingGroup` entries so each multi-role component scales and schedules together.
 
 ```bash
 cat manifests/14-hierarchical-podgroups/02-grove-disaggregated-serving.yaml
@@ -47,56 +88,88 @@ Apply the serving example.
 kubectl apply -f manifests/14-hierarchical-podgroups/02-grove-disaggregated-serving.yaml
 ```
 
-Read the top-level Grove object. This is the user-facing serving topology: router, prefill, and decode are described as one system.
+Inspect the top-level Grove object. Its status is the first place to check whether Grove accepted and started reconciling the serving topology.
 
 ```bash
-kubectl get podcliqueset -n kai-lab14 multinode-disaggregated -o yaml
+kubectl get podcliquesets.grove.io -n kai-lab14 -o wide
 ```
 
-Read the Grove PodGang. This is the scheduler-facing gang concept Grove uses to keep related role groups together.
+Describe the `PodCliqueSet` for detailed reconciliation status and events.
 
 ```bash
-kubectl get podgang -n kai-lab14 multinode-disaggregated -o yaml
+kubectl describe podcliqueset -n kai-lab14 multinode-disaggregated
 ```
 
-Read the KAI PodGroup. This is the important bridge for this lab: the SubGroup tree expresses router, prefill leader/workers, and decode leader/workers with their own minimums.
+List the role-specific `PodClique` resources that Grove created from the template.
 
 ```bash
-kubectl get podgroup -n kai-lab14 grove-serving -o yaml
+kubectl get podcliques.grove.io -n kai-lab14 -o wide
 ```
 
-List all KAI PodGroups in the namespace.
+List the `PodCliqueScalingGroup` resources. The prefill group contains the prefill leader and workers; the decode group contains the decode leader and workers.
 
 ```bash
-kubectl get podgroups -n kai-lab14
+kubectl get podcliquescalinggroups.grove.io -n kai-lab14 -o wide
+```
+
+Inspect the scheduler-facing `PodGang` objects created by Grove.
+
+```bash
+kubectl get podgangs.scheduler.grove.io -n kai-lab14 -o yaml
+```
+
+List the generated Pods and their node placement. These Pods use `schedulerName: kai-scheduler`, so KAI is responsible for placement.
+
+```bash
+kubectl get pods -n kai-lab14 -o wide
+```
+
+Read namespace events. Events usually show the first useful signal if the Grove object, PodGang, or generated Pods are waiting on a scheduling condition.
+
+```bash
+kubectl get events -n kai-lab14 --sort-by=.lastTimestamp
+```
+
+Inspect the Grove operator logs. These logs explain what Grove reconciled from the `PodCliqueSet`: cliques, scaling groups, gangs, and Pods.
+
+```bash
+kubectl logs -n grove-system -l app.kubernetes.io/name=grove-operator --tail=200
+```
+
+Inspect the KAI scheduler logs. These logs are the scheduler-side view: queue admission, gang feasibility, and placement decisions for the generated Pods.
+
+```bash
+kubectl logs -n kai-scheduler deploy/kai-scheduler-default --tail=200
 ```
 
 ## Clean Up
 
-Delete the namespace that contains the explicit PodGroup.
+Delete the Grove serving example.
+
+```bash
+kubectl delete -f manifests/14-hierarchical-podgroups/02-grove-disaggregated-serving.yaml --ignore-not-found
+```
+
+If the namespace remains because generated Pods are still terminating, remove it explicitly.
 
 ```bash
 kubectl delete namespace kai-lab14 --ignore-not-found
 ```
 
-Delete the cluster-scoped queue used by the PodGroup.
+Delete the cluster-scoped queue if it remains.
 
 ```bash
 kubectl delete queue grove-demo --ignore-not-found
 ```
 
-Delete the lab-only Grove CRDs. This removes the mock API types created for the lesson.
-
-```bash
-kubectl delete -f manifests/14-hierarchical-podgroups/01-grove-crds.yaml --ignore-not-found
-```
-
 ## What Just Happened
 
-You represented a distributed serving topology without running the model itself. The Grove-shaped resources describe the application structure, while the KAI PodGroup describes the scheduling structure. The useful idea is not just "schedule seven Pods together"; it is "schedule the router, schedule prefill as a leader-worker group, schedule decode as a leader-worker group, and keep each tightly coupled group close enough for the serving path to work."
+You used Grove as the application-facing API and KAI as the scheduling backend. The `PodCliqueSet` expressed the disaggregated serving topology. Grove expanded that into role-specific cliques, grouped prefill/decode components, scheduler-facing PodGangs, and Pods. KAI then handled the actual scheduling decisions for those Pods through the `kai-scheduler` scheduler name and the `grove-demo` queue label.
 
 ## Sources
 
-- [Hierarchical PodGroup Design](https://github.com/kai-scheduler/KAI-Scheduler/tree/main/docs/developer/designs/hierarchical-podgroup)
 - [Grove README](https://github.com/ai-dynamo/grove#how-it-works)
+- [Grove Core Concepts Tutorial](https://github.com/ai-dynamo/grove/blob/main/docs/user-guide/01_core-concepts/01_overview.md)
+- [Grove Quickstart](https://github.com/ai-dynamo/grove/blob/main/docs/quickstart.md)
+- [Grove API Reference](https://github.com/ai-dynamo/grove/blob/main/docs/api-reference/operator-api.md)
 - [Grove Multinode Disaggregated Example](https://github.com/ai-dynamo/grove/blob/main/docs/assets/multinode-disaggregated.excalidraw.png)

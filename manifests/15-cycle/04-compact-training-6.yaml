@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: compact-train-6
+  namespace: kai-lab15
+  labels:
+    kai-scheduler-101/chapter: "15"
+spec:
+  parallelism: 6
+  completions: 6
+  template:
+    metadata:
+      labels:
+        app: compact-train-6
+        kai.scheduler/queue: cycle-demo
+        kai-scheduler-101/chapter: "15"
+    spec:
+      schedulerName: kai-scheduler
+      priorityClassName: train
+      restartPolicy: Never
+      tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 80
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values: [kwok-gpu-03, kwok-gpu-04]
+      resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
+      containers:
+        - name: trainer
+          image: ubuntu:22.04
+          command: ["bash", "-lc"]
+          args: ["echo compact training worker; sleep 3600"]
+          resources: { claims: [ { name: gpu } ] }

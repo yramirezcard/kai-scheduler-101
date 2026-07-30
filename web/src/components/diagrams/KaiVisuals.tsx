@@ -1271,6 +1271,57 @@ export function HierarchicalPodGroupAnimation() {
   );
 }
 
+export function GroveComponentsDiagram() {
+  const clique = (x: number, y: number, label: string, sub: string, w = 270) => (
+    <g>
+      <rect x={x} y={y} width={w} height="50" rx="4" fill="var(--color-accent)" stroke="var(--color-accent-bright)" strokeWidth="1.6" />
+      <text x={x + w / 2} y={y + 20} textAnchor="middle" fontSize="13" fontWeight="800" fill="#06201d">{label}</text>
+      <text x={x + w / 2} y={y + 37} textAnchor="middle" fontSize="10.5" fontWeight="700" fill="#06201d">{sub}</text>
+    </g>
+  );
+
+  return (
+    <Frame title="Grove + KAI: Hierarchical Scheduling for Disaggregated Serving" h={560}>
+      <text x="450" y="62" textAnchor="middle" fontSize="11" fill="var(--color-fg-mut)">
+        PodCliqueSet replicas spread for availability; tightly coupled prefill/decode roles are packed for performance.
+      </text>
+
+      <text x="56" y="118" textAnchor="middle" fontSize="14" fontWeight="800" fill="var(--color-fg)">PodCliqueSet</text>
+      <text x="56" y="138" textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-fg)">(replicas=2)</text>
+
+      <path d="M 162 90 L 196 112" fill="none" stroke="var(--color-accent)" strokeWidth="1.6" strokeDasharray="5 5" />
+      <rect x="196" y="90" width="620" height="28" rx="2" fill="transparent" stroke="var(--color-accent)" strokeWidth="1.6" strokeDasharray="6 5" />
+      <text x="506" y="110" textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-fg)">Network spread for availability</text>
+
+      <rect x="196" y="120" width="620" height="390" rx="3" fill="transparent" stroke="var(--color-accent)" strokeWidth="1.6" strokeDasharray="6 5" />
+      <rect x="154" y="120" width="42" height="390" rx="3" fill="transparent" stroke="var(--color-accent)" strokeWidth="1.6" strokeDasharray="6 5" />
+      <text x="172" y="478" textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-fg)">0</text>
+      <text x="214" y="478" textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-fg)">1</text>
+
+      <text x="506" y="145" textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-kai)">Replica 0 · one complete serving stack</text>
+      {clique(324, 168, "PodClique A · router", "replicas=2, minAvailable=1")}
+
+      <rect x="304" y="244" width="310" height="138" rx="18" fill="transparent" stroke="var(--color-accent)" strokeWidth="2" />
+      {clique(324, 260, "PodClique B · prefill leader", "replicas=1, minAvailable=1")}
+      {clique(324, 326, "PodClique C · prefill workers", "replicas=3, minAvailable=2")}
+      <text x="712" y="306" textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-fg)">ScalingGroup 1</text>
+      <text x="712" y="324" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--color-fg-mut)">"Prefill"</text>
+      <text x="712" y="342" textAnchor="middle" fontSize="10.5" fill="var(--color-fg-mut)">replicas=1, minAvailable=1</text>
+
+      <rect x="304" y="390" width="310" height="138" rx="18" fill="transparent" stroke="var(--color-kai)" strokeWidth="2" />
+      {clique(324, 406, "PodClique D · decode leader", "replicas=1, minAvailable=1")}
+      {clique(324, 472, "PodClique E · decode workers", "replicas=4, minAvailable=3")}
+      <text x="712" y="452" textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-fg)">ScalingGroup 2</text>
+      <text x="712" y="470" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--color-fg-mut)">"Decode"</text>
+      <text x="712" y="488" textAnchor="middle" fontSize="10.5" fill="var(--color-fg-mut)">replicas=2, minAvailable=1</text>
+
+      <text x="462" y="548" textAnchor="middle" fontSize="11" fontWeight="800" fill="var(--color-fg)">
+        Network packed for performance · KAI places the generated Pods through queue, gang, and topology policy.
+      </text>
+    </Frame>
+  );
+}
+
 /* ══════════════════════════════════════════════════════════════════════════
    Chapter 17 · Scheduling Cycle — five ordered actions
    ══════════════════════════════════════════════════════════════════════════ */

@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inference-fragmenter
+  namespace: kai-lab15
+  labels:
+    kai-scheduler-101/chapter: "15"
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: inference-fragmenter
+  template:
+    metadata:
+      labels:
+        app: inference-fragmenter
+        kai.scheduler/queue: cycle-demo
+        kai-scheduler-101/chapter: "15"
+    spec:
+      schedulerName: kai-scheduler
+      priorityClassName: inference
+      tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values: [kwok-gpu-03, kwok-gpu-04]
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: inference-fragmenter
+      resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
+      containers:
+        - name: inference
+          image: ubuntu:22.04
+          command: ["bash", "-lc"]
+          args: ["echo inference replica; sleep 3600"]
+          resources: { claims: [ { name: gpu } ] }

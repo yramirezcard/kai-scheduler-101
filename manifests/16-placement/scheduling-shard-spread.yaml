@@ -8,4 +8,4 @@ spec:
   partitionLabelKey: kai.scheduler/node-pool
   partitionLabelValue: placement-spread
   placementStrategy:
-    cpu: spread
+    gpu: spread

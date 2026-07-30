@@ -10,3 +10,4 @@
     - { role: "02-k8s-tooling", tags: [tooling, kubectl, helm] }
     - { role: "03-kwok", tags: [kwok] }
     - { role: "04-fake-gpu-operator", tags: [fake-gpu-operator] }
+    - { role: "05-grove", tags: [grove] }

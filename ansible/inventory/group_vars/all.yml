@@ -4,4 +4,6 @@ k3s_config_dir: /etc/rancher/k3s
 k3s_kubeconfig: /etc/rancher/k3s/k3s.yaml
 kai_version: "{{ lookup('env', 'KAI_VERSION') | default('v0.16.5', true) }}"
 fake_gpu_operator_version: "{{ lookup('env', 'FAKE_GPU_OPERATOR_VERSION') | default('0.2.0', true) }}"
+grove_version: "{{ lookup('env', 'GROVE_VERSION') | default('v0.1.0-alpha.11', true) }}"
+grove_namespace: "{{ lookup('env', 'GROVE_NAMESPACE') | default('grove-system', true) }}"
 kwok_version: "{{ lookup('env', 'KWOK_VERSION') | default('v0.7.0', true) }}"

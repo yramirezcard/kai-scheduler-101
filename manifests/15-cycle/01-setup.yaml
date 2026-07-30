@@ -19,23 +19,12 @@ spec:
         - name: gpu
           exactly: { allocationMode: ExactCount, count: 1, deviceClassName: gpu.nvidia.com }
 ---
-apiVersion: v1
-kind: Pod
+apiVersion: scheduling.run.ai/v2
+kind: Queue
 metadata:
-  name: explain-pending
-  namespace: kai-lab15
+  name: cycle-demo
   labels:
-    kai.scheduler/queue: default-queue
     kai-scheduler-101/chapter: "15"
 spec:
-  schedulerName: kai-scheduler
-  restartPolicy: Never
-  resourceClaims:
-    - name: gpu
-      resourceClaimTemplateName: gpu-one
-  containers:
-    - name: too-large
-      image: ubuntu:22.04
-      command: ["bash", "-lc"]
-      args: ["sleep 3600"]
-      resources: { claims: [ { name: gpu } ], requests: { cpu: "500" } }
+  resources:
+    gpu: { quota: 32, limit: 32, overQuotaWeight: 1 }

@@ -5,6 +5,20 @@ metadata:
   labels:
     kai-scheduler-101/chapter: "16"
 ---
+apiVersion: resource.k8s.io/v1
+kind: ResourceClaimTemplate
+metadata:
+  name: gpu-one
+  namespace: kai-lab16-spread
+  labels:
+    kai-scheduler-101/chapter: "16"
+spec:
+  spec:
+    devices:
+      requests:
+        - name: gpu
+          exactly: { allocationMode: ExactCount, count: 1, deviceClassName: gpu.nvidia.com }
+---
 apiVersion: scheduling.run.ai/v2
 kind: Queue
 metadata:
@@ -14,7 +28,7 @@ metadata:
     kai.scheduler/node-pool: placement-spread
 spec:
   resources:
-    cpu: { quota: 12, limit: 24, overQuotaWeight: 1 }
+    gpu: { quota: 6, limit: 16, overQuotaWeight: 1 }
 ---
 apiVersion: batch/v1
 kind: Job
@@ -35,17 +49,13 @@ spec:
         kai-scheduler-101/chapter: "16"
     spec:
       schedulerName: kai-scheduler
+      priorityClassName: train
       restartPolicy: Never
       tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+      resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
       containers:
         - name: worker
           image: ubuntu:22.04
           command: ["bash", "-lc"]
           args: ["echo spread worker; sleep 3600"]
-          resources:
-            requests:
-              cpu: "1"
-              memory: 128Mi
-            limits:
-              cpu: "1"
-              memory: 128Mi
+          resources: { claims: [ { name: gpu } ] }

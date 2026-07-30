@@ -4,23 +4,23 @@ Placement strategy changes how KAI chooses among feasible nodes. Spread distribu
 
 Consolidation uses the same intuition after work is already running. If workloads are scattered in a way that leaves the cluster fragmented, the scheduler can repack movable workloads to improve utilization, but only when the move can be completed safely. That is why Consolidate appears early in the scheduling cycle: it tries to improve placement before disruptive actions such as reclaim or preemption are needed.
 
-KAI configures placement at the `SchedulingShard` level. The official shard configuration supports a `placementStrategy` map per resource, for example `cpu: spread`, `gpu: spread`, `cpu: binpack`, or `gpu: binpack`. This lab uses CPU-only KWOK workloads so the placement effect is visible without relying on GPU ResourceSlices.
+KAI configures placement at the `SchedulingShard` level. The official shard configuration supports a `placementStrategy` map per resource, for example `cpu: spread`, `gpu: spread`, `cpu: binpack`, or `gpu: binpack`. This lab uses one-GPU DRA claims so the placement effect is tied to GPU fragmentation, which is the resource you usually care about in KAI.
 
 <PlacementAnimation />
 
-Display the fake node pools. This creates three nodes for the spread shard and three nodes for the bin-pack shard.
+Display the node-label setup. It does not create new nodes; it labels the four existing KWOK nodes so two belong to the spread shard and two belong to the bin-pack shard.
 
 ```bash
-cat manifests/16-placement/node-pools.yaml
+cat manifests/16-placement/node-labels.yaml
 ```
 
-Apply the fake node pools.
+Apply the node labels.
 
 ```bash
-kubectl apply -f manifests/16-placement/node-pools.yaml
+kubectl apply -f manifests/16-placement/node-labels.yaml
 ```
 
-Display the spread shard example. The important field is `spec.placementStrategy.cpu: spread`.
+Display the spread shard example. The important field is `spec.placementStrategy.gpu: spread`.
 
 ```bash
 cat manifests/16-placement/scheduling-shard-spread.yaml
@@ -32,7 +32,7 @@ Apply the spread example.
 kubectl apply -f manifests/16-placement/scheduling-shard-spread.yaml
 ```
 
-Display the bin-pack shard example. The important field is `spec.placementStrategy.cpu: binpack`.
+Display the bin-pack shard example. The important field is `spec.placementStrategy.gpu: binpack`.
 
 ```bash
 cat manifests/16-placement/scheduling-shard-binpack.yaml
@@ -44,7 +44,7 @@ Apply the bin-pack example.
 kubectl apply -f manifests/16-placement/scheduling-shard-binpack.yaml
 ```
 
-List the two node pools. The shard partition label is what separates the scheduler domains.
+List the two node pools. The shard partition label is what separates the scheduler domains while still reusing the same four KWOK nodes from the lab setup.
 
 ```bash
 kubectl get nodes -l kai.scheduler/node-pool
@@ -56,7 +56,13 @@ List the placement-related shards.
 kubectl get schedulingshard spread-demo binpack-demo
 ```
 
-Display the spread workload. Its queue, Job, and Pods all carry `kai.scheduler/node-pool: placement-spread`, so they belong to the spread shard.
+Apply the PriorityClasses used by these training workloads. The Pods use `priorityClassName: train`, which keeps them movable if later consolidation or preemption examples need to evict training Pods.
+
+```bash
+kubectl apply -f manifests/10-priority/priority-classes.yaml
+```
+
+Display the spread workload. Its queue, Job, and Pods all carry `kai.scheduler/node-pool: placement-spread`, so they belong to the spread shard. Each Pod requests one GPU through a `ResourceClaimTemplate`.
 
 ```bash
 cat manifests/16-placement/spread-workload.yaml
@@ -68,13 +74,13 @@ Apply the spread workload.
 kubectl apply -f manifests/16-placement/spread-workload.yaml
 ```
 
-List the spread Pods with their nodes. With spread scoring, the Pods should be distributed across the spread node pool as evenly as feasible.
+List the spread Pods with their nodes. With GPU spread scoring, the one-GPU Pods should be distributed across the spread node pool as evenly as feasible.
 
 ```bash
 kubectl get pods -n kai-lab16-spread -o wide
 ```
 
-Display the bin-pack workload. It has the same shape as the spread workload, but targets the bin-pack shard.
+Display the bin-pack workload. It has the same GPU shape as the spread workload, but targets the bin-pack shard.
 
 ```bash
 cat manifests/16-placement/binpack-workload.yaml
@@ -86,7 +92,7 @@ Apply the bin-pack workload.
 kubectl apply -f manifests/16-placement/binpack-workload.yaml
 ```
 
-List the bin-pack Pods with their nodes. With bin-pack scoring, the Pods should concentrate on fewer nodes before filling the rest of the pool.
+List the bin-pack Pods with their nodes. With GPU bin-pack scoring, the one-GPU Pods should concentrate on fewer nodes before filling the rest of the pool.
 
 ```bash
 kubectl get pods -n kai-lab16-binpack -o wide
@@ -124,15 +130,15 @@ Delete the queues created for the two placement strategies.
 kubectl delete queue spread-demo binpack-demo --ignore-not-found
 ```
 
-Delete the fake placement nodes.
+Remove only the temporary placement labels from the existing KWOK nodes.
 
 ```bash
-kubectl delete node placement-spread-01 placement-spread-02 placement-spread-03 placement-binpack-01 placement-binpack-02 placement-binpack-03 --ignore-not-found
+kubectl label node kwok-gpu-01 kwok-gpu-02 kwok-gpu-03 kwok-gpu-04 kai.scheduler/node-pool-
 ```
 
 ## What Just Happened
 
-You created two shard-local placement policies and sent equivalent workloads to each one. Spread optimized for distribution. Bin-pack optimized for consolidation by filling fewer nodes first. The right choice depends on the workload: interactive services often prefer spread for resilience, while gang-heavy training clusters often benefit from bin-pack because it preserves larger contiguous free regions.
+You reused the four simulated GPU nodes and temporarily partitioned them into two shard-local placement policies. Spread optimized for distribution. Bin-pack optimized for consolidation by filling fewer nodes first. The right choice depends on the workload: interactive services often prefer spread for resilience, while gang-heavy training clusters often benefit from bin-pack because it preserves larger contiguous free regions.
 
 ## Sources
 

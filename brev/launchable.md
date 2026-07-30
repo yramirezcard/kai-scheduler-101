@@ -34,4 +34,4 @@ Do not append raw ports to Brev tunnel URLs. Use the tunnel URL Brev provides fo
 ## 5. Review
 
 - Name: `kai-scheduler-101`.
-- Optional variables: `K3S_CHANNEL`, `K3S_VERSION`, `WORKSHOP_PORT`, `KAI_VERSION`, `FAKE_GPU_OPERATOR_VERSION`, `KWOK_VERSION`.
+- Optional variables: `K3S_CHANNEL`, `K3S_VERSION`, `WORKSHOP_PORT`, `KAI_VERSION`, `FAKE_GPU_OPERATOR_VERSION`, `GROVE_VERSION`, `GROVE_NAMESPACE`, `KWOK_VERSION`.

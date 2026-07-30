@@ -14,39 +14,149 @@ The cycle is:
 - **Preempt**: evict lower-priority preemptible work inside the same queue.
 - **StaleGangEviction**: evict gangs that no longer satisfy their minimums.
 
-Display an intentionally difficult workload. It asks for an unrealistic CPU amount so you can inspect scheduler events.
+This hands-on turns the scheduling cycle into a placement story. You will create a fragmented 32-GPU cluster shape:
+
+- `wide-train-12` uses 12 GPUs across two 8-GPU nodes, leaving unused holes on both nodes.
+- `inference-fragmenter` places inference replicas on two other nodes, leaving smaller holes there.
+- `compact-train-6` needs 6 GPUs. Initially, no single node has 6 free GPUs, so the job is expected to be fragmented across nodes.
+
+After you delete either the wide training job or the inference deployment, there is enough contiguous capacity for `compact-train-6` to fit on one node. The Consolidate action is the scheduler step that looks for opportunities to reduce this kind of fragmentation by moving movable training Pods when they can be placed again.
+
+Display the setup manifest. It creates the namespace, a one-GPU `ResourceClaimTemplate`, and a queue with access to the 32 simulated GPUs.
 
 ```bash
-cat manifests/15-cycle/stuck-workload.yaml
+cat manifests/15-cycle/01-setup.yaml
 ```
 
-Apply the stuck workload.
+Apply the setup manifest.
 
 ```bash
-kubectl apply -f manifests/15-cycle/stuck-workload.yaml
+kubectl apply -f manifests/15-cycle/01-setup.yaml
 ```
 
-Describe the Pod and jump straight to events.
+Apply the PriorityClasses used by the training and inference workloads.
 
 ```bash
-kubectl describe pod -n kai-lab15 explain-pending | sed -n '/Events:/,$p'
+kubectl apply -f manifests/10-priority/priority-classes.yaml
 ```
 
-Read the namespace event stream.
+Display the first workload. `wide-train-12` requests 12 one-GPU Pods and constrains them to `kwok-gpu-01` and `kwok-gpu-02`. The topology spread rule keeps the replicas balanced across the two nodes, so each node is used but not full.
 
 ```bash
-kubectl get events -n kai-lab15 --sort-by=.lastTimestamp | tail -30
+cat manifests/15-cycle/02-wide-training-12.yaml
 ```
 
-List KAI scheduler logs for additional context.
+Apply the 12-GPU training workload.
 
 ```bash
-kubectl logs -n kai-scheduler deploy/kai-scheduler --tail=120
+kubectl apply -f manifests/15-cycle/02-wide-training-12.yaml
+```
+
+Inspect where the first training job landed. You should see its Pods spread across two nodes.
+
+```bash
+kubectl get pods -n kai-lab15 -l app=wide-train-12 -o wide
+```
+
+Display the inference workload. It creates replicas on `kwok-gpu-03` and `kwok-gpu-04`, intentionally leaving partial free capacity on both nodes.
+
+```bash
+cat manifests/15-cycle/03-inference-fragmenter.yaml
+```
+
+Apply the inference workload.
+
+```bash
+kubectl apply -f manifests/15-cycle/03-inference-fragmenter.yaml
+```
+
+Inspect the inference replicas. They should be distributed across two nodes.
+
+```bash
+kubectl get pods -n kai-lab15 -l app=inference-fragmenter -o wide
+```
+
+Display the compact training workload. It asks for 6 GPUs, but at this point the cluster has only smaller holes spread across nodes.
+
+```bash
+cat manifests/15-cycle/04-compact-training-6.yaml
+```
+
+Apply the compact training workload.
+
+```bash
+kubectl apply -f manifests/15-cycle/04-compact-training-6.yaml
+```
+
+Inspect the compact training Pods. Because no single node has 6 free GPUs, this workload is expected to be fragmented across two nodes.
+
+```bash
+kubectl get pods -n kai-lab15 -l app=compact-train-6 -o wide
+```
+
+Look at the full namespace placement so you can see the fragmentation pattern across all three workloads.
+
+```bash
+kubectl get pods -n kai-lab15 -o wide
+```
+
+Read namespace events. Events are the first layer for understanding why Pods landed, waited, or moved.
+
+```bash
+kubectl get events -n kai-lab15 --sort-by=.lastTimestamp
+```
+
+Inspect KAI scheduler logs before freeing capacity. Look for scheduling-cycle actions such as allocate and consolidate.
+
+```bash
+kubectl logs -n kai-scheduler deploy/kai-scheduler-default --tail=200
+```
+
+Delete the inference workload to free contiguous capacity on `kwok-gpu-03` and `kwok-gpu-04`.
+
+```bash
+kubectl delete -f manifests/15-cycle/03-inference-fragmenter.yaml
+```
+
+Inspect the compact training Pods again after a scheduler cycle has had time to run. The desired consolidation result is that the 6-GPU job can fit on one node instead of staying split across two smaller holes.
+
+```bash
+kubectl get pods -n kai-lab15 -l app=compact-train-6 -o wide
+```
+
+Inspect the KAI scheduler logs again. This is where you correlate the new placement with the Consolidate action.
+
+```bash
+kubectl logs -n kai-scheduler deploy/kai-scheduler-default --tail=200
 ```
 
 ## Clean Up
 
-Delete the stuck workload namespace so its pending Pod does not keep appearing in later scheduling events.
+Delete the compact training workload.
+
+```bash
+kubectl delete -f manifests/15-cycle/04-compact-training-6.yaml --ignore-not-found
+```
+
+Delete the wide training workload.
+
+```bash
+kubectl delete -f manifests/15-cycle/02-wide-training-12.yaml --ignore-not-found
+```
+
+Delete the inference workload if it still exists.
+
+```bash
+kubectl delete -f manifests/15-cycle/03-inference-fragmenter.yaml --ignore-not-found
+```
+
+Delete the setup resources.
+
+```bash
+kubectl delete -f manifests/15-cycle/01-setup.yaml --ignore-not-found
+```
+
+If the namespace is still terminating, explicitly remove it.
 
 ```bash
 kubectl delete namespace kai-lab15 --ignore-not-found
@@ -54,8 +164,9 @@ kubectl delete namespace kai-lab15 --ignore-not-found
 
 ## What Just Happened
 
-You used a pending workload as a debugging probe. Events are the first diagnostic layer because they tell you which scheduling decision blocked placement before you reach for metrics or snapshots.
+You created a fragmented placement, observed that a 6-GPU training job had to use multiple nodes, then freed enough capacity for that job to become compactable. This is the reason Consolidate appears early in the scheduling cycle: before KAI reaches disruptive fairness actions such as reclaim and preempt, it can try to improve placement by moving training Pods only when they can be placed again.
 
 ## Sources
 
 - [Scheduling Deep Dive - Scheduling Cycle](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/scheduling-deep-dive/README.md)
+- [NVIDIA Technical Blog: NVIDIA Open Sources Run:ai Scheduler](https://developer.nvidia.com/blog/nvidia-open-sources-runai-scheduler-to-foster-community-collaboration/)

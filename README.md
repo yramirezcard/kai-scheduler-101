@@ -1,6 +1,6 @@
 # KAI Scheduler 101 Brev Launchable
 
-Hands-on KAI Scheduler lab for a CPU-only Brev VM. The bootstrap creates a single-node k3s cluster, installs KWOK, creates simulated GPU nodes, installs fake-gpu-operator, and serves an interactive Next.js tutorial with an embedded shell.
+Hands-on KAI Scheduler lab for a CPU-only Brev VM. The bootstrap creates a single-node k3s cluster, installs KWOK, creates simulated GPU nodes, installs fake-gpu-operator, installs Grove, and serves an interactive Next.js tutorial with an embedded shell.
 
 ## What This Lab Teaches
 
@@ -40,14 +40,18 @@ Optional Launchable variables:
 | `WORKSHOP_PORT` | `3000` |
 | `KAI_VERSION` | `v0.16.5` |
 | `FAKE_GPU_OPERATOR_VERSION` | `0.2.0` |
+| `GROVE_VERSION` | `v0.1.0-alpha.11` |
+| `GROVE_NAMESPACE` | `grove-system` |
 | `KWOK_VERSION` | `v0.7.0` |
 
 `FAKE_GPU_OPERATOR_VERSION` pins the OCI Helm chart from `oci://ghcr.io/run-ai/fake-gpu-operator/fake-gpu-operator`. The GitHub release tag is `v0.2.0`, while Helm expects chart version `0.2.0`; the setup role accepts either form and strips a leading `v` before calling Helm.
 
+`GROVE_VERSION` pins the Grove OCI Helm chart from `oci://ghcr.io/ai-dynamo/grove/grove-charts`. The chart version includes the leading `v`, matching the Grove release tag.
+
 ## Repo Layout
 
 ```text
-ansible/      readable bootstrap roles for host prep, k3s, tooling, KWOK, fake GPUs
+ansible/      readable bootstrap roles for host prep, k3s, tooling, KWOK, fake GPUs, Grove
 kwok/         simulated node manifests, including 4-node and 24-node fleets
 manifests/    YAML used by hands-on lessons
 scripts/      Brev wrapper, setup orchestration, and workshop service setup

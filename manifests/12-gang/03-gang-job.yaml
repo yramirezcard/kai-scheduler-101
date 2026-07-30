@@ -1,19 +1,19 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: gang-four
+  name: gang-eight
   namespace: kai-lab12
   labels:
     kai-scheduler-101/chapter: "12"
   annotations:
-    kai.scheduler/batch-min-member: "4"
+    kai.scheduler/batch-min-member: "8"
 spec:
-  parallelism: 4
-  completions: 4
+  parallelism: 8
+  completions: 8
   template:
     metadata:
       labels:
-        app: gang-four
+        app: gang-eight
         kai.scheduler/queue: gang-demo
         kai-scheduler-101/chapter: "12"
     spec:

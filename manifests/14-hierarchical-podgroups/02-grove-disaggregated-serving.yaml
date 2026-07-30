@@ -13,7 +13,8 @@ metadata:
     kai-scheduler-101/chapter: "14"
 spec:
   resources:
-    gpu: { quota: 6, limit: 8, overQuotaWeight: 1 }
+    cpu: { quota: -1, limit: -1, overQuotaWeight: 1 }
+    memory: { quota: -1, limit: -1, overQuotaWeight: 1 }
 ---
 apiVersion: grove.io/v1alpha1
 kind: PodCliqueSet
@@ -21,106 +22,123 @@ metadata:
   name: multinode-disaggregated
   namespace: kai-lab14
   labels:
+    app: multinode-disaggregated
     kai-scheduler-101/chapter: "14"
 spec:
-  schedulerName: kai-scheduler
-  queue: grove-demo
-  topology:
-    preferredDomain: node
-  cliques:
-    - name: router
-      replicas: 1
-      minAvailable: 1
-    - name: prefill
-      scalingGroup: prefill-replica
-      role: leader-worker
-    - name: decode
-      scalingGroup: decode-replica
-      role: leader-worker
----
-apiVersion: grove.io/v1alpha1
-kind: PodCliqueScalingGroup
-metadata:
-  name: prefill-replica
-  namespace: kai-lab14
-  labels:
-    kai-scheduler-101/chapter: "14"
-spec:
-  replicas: 1
-  minAvailable: 1
-  podCliques:
-    - name: prefill-leader
-      minAvailable: 1
-    - name: prefill-workers
-      minAvailable: 2
-  placement:
-    requiredDomain: node
----
-apiVersion: grove.io/v1alpha1
-kind: PodCliqueScalingGroup
-metadata:
-  name: decode-replica
-  namespace: kai-lab14
-  labels:
-    kai-scheduler-101/chapter: "14"
-spec:
-  replicas: 1
-  minAvailable: 1
-  podCliques:
-    - name: decode-leader
-      minAvailable: 1
-    - name: decode-workers
-      minAvailable: 2
-  placement:
-    requiredDomain: node
----
-apiVersion: grove.io/v1alpha1
-kind: PodGang
-metadata:
-  name: multinode-disaggregated
-  namespace: kai-lab14
-  labels:
-    kai-scheduler-101/chapter: "14"
-spec:
-  minAvailable: 5
-  cliques:
-    - name: router
-      minAvailable: 1
-    - name: prefill-leader
-      minAvailable: 1
-    - name: prefill-workers
-      minAvailable: 2
-    - name: decode-leader
-      minAvailable: 1
-    - name: decode-workers
-      minAvailable: 2
----
-apiVersion: scheduling.run.ai/v2
-kind: PodGroup
-metadata:
-  name: grove-serving
-  namespace: kai-lab14
-  labels:
-    kai-scheduler-101/chapter: "14"
-spec:
-  queue: grove-demo
-  minSubGroup: 3
-  subGroups:
-    - name: router
-      minMember: 1
-    - name: prefill
-      minSubGroup: 2
-    - name: prefill-leader
-      parent: prefill
-      minMember: 1
-    - name: prefill-workers
-      parent: prefill
-      minMember: 2
-    - name: decode
-      minSubGroup: 2
-    - name: decode-leader
-      parent: decode
-      minMember: 1
-    - name: decode-workers
-      parent: decode
-      minMember: 2
+  replicas: 2
+  template:
+    cliqueStartupType: CliqueStartupTypeInOrder
+    cliques:
+      - name: router
+        labels:
+          app: multinode-disaggregated
+          role: router
+          kai.scheduler/queue: grove-demo
+          kai-scheduler-101/chapter: "14"
+        spec:
+          roleName: router
+          replicas: 2
+          minAvailable: 1
+          podSpec:
+            schedulerName: kai-scheduler
+            tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+            containers:
+              - name: router
+                image: nginx:latest
+                resources:
+                  requests:
+                    cpu: 10m
+                    memory: 32Mi
+      - name: prefill-leader
+        labels:
+          app: multinode-disaggregated
+          role: prefill-leader
+          kai.scheduler/queue: grove-demo
+          kai-scheduler-101/chapter: "14"
+        spec:
+          roleName: prefill-leader
+          replicas: 1
+          minAvailable: 1
+          podSpec:
+            schedulerName: kai-scheduler
+            tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+            containers:
+              - name: prefill-leader
+                image: nginx:latest
+                resources:
+                  requests:
+                    cpu: 10m
+                    memory: 32Mi
+      - name: prefill-worker
+        labels:
+          app: multinode-disaggregated
+          role: prefill-worker
+          kai.scheduler/queue: grove-demo
+          kai-scheduler-101/chapter: "14"
+        spec:
+          roleName: prefill-worker
+          replicas: 3
+          minAvailable: 2
+          podSpec:
+            schedulerName: kai-scheduler
+            tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+            containers:
+              - name: prefill-worker
+                image: nginx:latest
+                resources:
+                  requests:
+                    cpu: 10m
+                    memory: 32Mi
+      - name: decode-leader
+        labels:
+          app: multinode-disaggregated
+          role: decode-leader
+          kai.scheduler/queue: grove-demo
+          kai-scheduler-101/chapter: "14"
+        spec:
+          roleName: decode-leader
+          replicas: 1
+          minAvailable: 1
+          podSpec:
+            schedulerName: kai-scheduler
+            tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+            containers:
+              - name: decode-leader
+                image: nginx:latest
+                resources:
+                  requests:
+                    cpu: 10m
+                    memory: 32Mi
+      - name: decode-worker
+        labels:
+          app: multinode-disaggregated
+          role: decode-worker
+          kai.scheduler/queue: grove-demo
+          kai-scheduler-101/chapter: "14"
+        spec:
+          roleName: decode-worker
+          replicas: 4
+          minAvailable: 3
+          podSpec:
+            schedulerName: kai-scheduler
+            tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+            containers:
+              - name: decode-worker
+                image: nginx:latest
+                resources:
+                  requests:
+                    cpu: 10m
+                    memory: 32Mi
+    podCliqueScalingGroups:
+      - name: prefill
+        cliqueNames:
+          - prefill-leader
+          - prefill-worker
+        replicas: 1
+        minAvailable: 1
+      - name: decode
+        cliqueNames:
+          - decode-leader
+          - decode-worker
+        replicas: 2
+        minAvailable: 1
