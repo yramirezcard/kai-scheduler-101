@@ -4,8 +4,6 @@ import { CodeBlock } from "@/components/CodeBlock";
 import { Terminal } from "@/components/Terminal";
 import { AppLaunchButton } from "@/components/AppLaunchButton";
 import {
-  BinderDraAnimation,
-  DraFlow,
   ElasticAnimation,
   FairShareAnimation,
   GangSchedulingAnimation,
@@ -33,8 +31,6 @@ const components: MDXComponents = {
   Callout,
   Terminal,
   AppLaunchButton,
-  BinderDraAnimation,
-  DraFlow,
   ElasticAnimation,
   FairShareAnimation,
   GangSchedulingAnimation,

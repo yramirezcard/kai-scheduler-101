@@ -2,7 +2,7 @@
 
 KAI Scheduler is a Kubernetes-native scheduler built for AI clusters. The default Kubernetes scheduler is excellent at deciding whether one Pod can fit on one Node. AI platforms usually need a wider policy view: teams share expensive GPU pools, training jobs need several workers at once, inference services need stronger priority, and distributed workloads often care about node, rack, or accelerator topology.
 
-KAI adds that platform view by scheduling through queues, PodGroups, priority classes, fairness rules, topology constraints, GPU sharing, and Dynamic Resource Allocation.
+KAI adds that platform view by scheduling through queues, PodGroups, priority classes, fairness rules, topology constraints, GPU sharing, and device claims.
 
 <KaiOverviewDiagram />
 

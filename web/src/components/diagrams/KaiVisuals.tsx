@@ -1582,119 +1582,78 @@ export function TopologyMap() {
    ══════════════════════════════════════════════════════════════════════════ */
 
 export function GpuSharingAnimation() {
-  const workloadPod = (x: number, y: number, name: string) => (
+  const workloadPod = (x: number, y: number, name: string, fraction: string) => (
     <g>
-      <rect x={x} y={y} width={150} height={56} rx={5} fill="var(--color-accent)" stroke="var(--color-accent-bright)" strokeWidth="1.5" />
-      <text x={x + 75} y={y + 23} textAnchor="middle" fontSize="12" fontWeight="800" fill="#05201d">{name}</text>
-      <text x={x + 75} y={y + 41} textAnchor="middle" fontSize="10" fontWeight="700" fill="#05201d">gpu-fraction: 0.5</text>
+      <rect x={x} y={y} width={132} height={52} rx={5} fill="var(--color-kai)" stroke="var(--color-kai-bright)" strokeWidth="1.5" />
+      <text x={x + 66} y={y + 21} textAnchor="middle" fontSize="11.5" fontWeight="800" fill="white">{name}</text>
+      <text x={x + 66} y={y + 38} textAnchor="middle" fontSize="9.5" fontWeight="700" fill="white">gpu-fraction: {fraction}</text>
     </g>
   );
   const reservationPod = (x: number, y: number) => (
     <g>
-      <rect x={x} y={y} width={178} height={72} rx={5} fill="color-mix(in srgb, var(--color-kai) 18%, transparent)" stroke="var(--color-kai)" strokeWidth="1.4" strokeDasharray="6 4" />
-      <text x={x + 89} y={y + 24} textAnchor="middle" fontSize="11" fontWeight="800" fill="var(--color-kai)">one reservation Pod</text>
-      <text x={x + 89} y={y + 43} textAnchor="middle" fontSize="9.5" fill="var(--color-fg-mut)">reserves shared GPU</text>
-      <text x={x + 89} y={y + 59} textAnchor="middle" fontSize="9.5" fill="var(--color-fg-mut)">0.5 + 0.5 = 1.0</text>
+      <rect x={x} y={y} width={180} height={80} rx={5} fill="color-mix(in srgb, var(--color-kai) 18%, transparent)" stroke="var(--color-kai)" strokeWidth="1.4" strokeDasharray="6 4" />
+      <text x={x + 90} y={y + 24} textAnchor="middle" fontSize="11" fontWeight="800" fill="var(--color-kai)">one reservation Pod</text>
+      <text x={x + 90} y={y + 43} textAnchor="middle" fontSize="9.5" fill="var(--color-fg-mut)">reserves shared GPU</text>
+      <text x={x + 90} y={y + 61} textAnchor="middle" fontSize="9.5" fill="var(--color-fg-mut)">0.2 + 0.3 + 0.5 = 1.0</text>
     </g>
   );
 
   return (
-    <Frame title="GPU Sharing: Cross-Namespace Pods Share One GPU" h={430}>
+    <Frame title="GPU Sharing: Three Namespaces, One Queue, One Physical GPU" h={470}>
       <style>{`
         .gpu-share-line { stroke-dasharray: 6 5; opacity: .95; }
       `}</style>
 
-      <rect x="42" y="74" width="202" height="120" rx="7" fill="var(--color-panel)" stroke="var(--color-accent)" strokeWidth="1.5" />
-      <text x="143" y="100" textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-accent)">namespace-a</text>
-      {workloadPod(68, 122, "Pod A")}
+      <rect x="36" y="72" width="184" height="102" rx="7" fill="var(--color-panel)" stroke="var(--color-accent)" strokeWidth="1.5" />
+      <text x="128" y="96" textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-accent)">namespace-a</text>
+      {workloadPod(62, 112, "gpu-share-20", "0.2")}
 
-      <rect x="42" y="224" width="202" height="120" rx="7" fill="var(--color-panel)" stroke="var(--color-accent)" strokeWidth="1.5" />
-      <text x="143" y="250" textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-accent)">namespace-b</text>
-      {workloadPod(68, 272, "Pod B")}
+      <rect x="36" y="196" width="184" height="102" rx="7" fill="var(--color-panel)" stroke="var(--color-accent)" strokeWidth="1.5" />
+      <text x="128" y="220" textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-accent)">namespace-b</text>
+      {workloadPod(62, 236, "gpu-share-30", "0.3")}
 
-      <rect x="352" y="94" width="196" height="230" rx="8" fill="color-mix(in srgb, var(--color-panel) 92%, white)" stroke="var(--color-kai)" strokeWidth="1.7" />
-      <text x="450" y="120" textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-kai)">one physical GPU</text>
-      <text x="450" y="140" textAnchor="middle" fontSize="9.5" fill="var(--color-fg-mut)">same GPU ID / UUID</text>
-      <rect x="386" y="160" width="128" height="56" rx="5" fill="var(--color-accent)" stroke="var(--color-accent-bright)" strokeWidth="1.4" />
-      <text x="450" y="183" textAnchor="middle" fontSize="11" fontWeight="800" fill="#05201d">Pod A share</text>
-      <text x="450" y="201" textAnchor="middle" fontSize="10" fontWeight="700" fill="#05201d">0.5 GPU</text>
-      <rect x="386" y="228" width="128" height="56" rx="5" fill="var(--color-accent)" stroke="var(--color-accent-bright)" strokeWidth="1.4" />
-      <text x="450" y="251" textAnchor="middle" fontSize="11" fontWeight="800" fill="#05201d">Pod B share</text>
-      <text x="450" y="269" textAnchor="middle" fontSize="10" fontWeight="700" fill="#05201d">0.5 GPU</text>
-      <text x="450" y="306" textAnchor="middle" fontSize="10" fill="var(--color-fg-mut)">combined request fills device</text>
+      <rect x="36" y="320" width="184" height="102" rx="7" fill="var(--color-panel)" stroke="var(--color-accent)" strokeWidth="1.5" />
+      <text x="128" y="344" textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-accent)">namespace-c</text>
+      {workloadPod(62, 360, "gpu-share-50", "0.5")}
 
-      <rect x="636" y="84" width="220" height="250" rx="7" fill="var(--color-panel)" stroke="var(--color-kai)" strokeWidth="1.5" />
-      <text x="746" y="110" textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-kai)">reservation namespace</text>
-      <text x="746" y="128" textAnchor="middle" fontSize="9.5" fill="var(--color-fg-mut)">kai-resource-reservation</text>
-      {reservationPod(657, 156)}
-      <rect x="667" y="252" width="158" height="50" rx="5" fill="color-mix(in srgb, var(--color-accent) 14%, transparent)" stroke="var(--color-accent)" strokeWidth="1.2" />
-      <text x="746" y="273" textAnchor="middle" fontSize="10.5" fontWeight="800" fill="var(--color-accent)">GPU ID discovery</text>
-      <text x="746" y="290" textAnchor="middle" fontSize="9" fill="var(--color-fg-mut)">runtime + NVML access</text>
+      <rect x="288" y="78" width="172" height="86" rx="7" fill="var(--color-panel)" stroke="var(--color-kai)" strokeWidth="1.6" />
+      <text x="374" y="105" textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-kai)">Queue</text>
+      <text x="374" y="126" textAnchor="middle" fontSize="10" fill="var(--color-fg-mut)">gpu-sharing-demo</text>
+      <text x="374" y="145" textAnchor="middle" fontSize="10" fill="var(--color-fg-mut)">quota: 1 · limit: 1</text>
 
-      <path className="gpu-share-line" d="M 218 150 C 282 150 318 168 386 188" fill="none" stroke="var(--color-accent-bright)" strokeWidth="1.8" markerEnd="url(#arrow)" />
-      <path className="gpu-share-line" d="M 218 300 C 282 300 318 276 386 256" fill="none" stroke="var(--color-accent-bright)" strokeWidth="1.8" markerEnd="url(#arrow)" />
-      <path className="gpu-share-line" d="M 514 188 C 578 180 610 176 657 186" fill="none" stroke="var(--color-kai)" strokeWidth="1.8" markerEnd="url(#arrow-pink)" />
-      <path className="gpu-share-line" d="M 514 256 C 578 254 614 238 657 218" fill="none" stroke="var(--color-kai)" strokeWidth="1.8" markerEnd="url(#arrow-pink)" />
-      <path d="M 746 252 L 746 228" fill="none" stroke="var(--color-accent)" strokeWidth="1.6" markerEnd="url(#arrow)" />
+      <rect x="306" y="214" width="240" height="154" rx="8" fill="color-mix(in srgb, var(--color-panel) 92%, white)" stroke="var(--color-kai)" strokeWidth="1.7" />
+      <text x="426" y="239" textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-kai)">one physical GPU</text>
+      <text x="426" y="258" textAnchor="middle" fontSize="9.5" fill="var(--color-fg-mut)">assigned GPU UUID</text>
+      <rect x="330" y="282" width="44" height="52" rx="5" fill="var(--color-kai)" stroke="var(--color-kai-bright)" strokeWidth="1.4" />
+      <text x="352" y="304" textAnchor="middle" fontSize="10" fontWeight="800" fill="white">20%</text>
+      <text x="352" y="320" textAnchor="middle" fontSize="8.5" fill="white">A</text>
+      <rect x="386" y="282" width="66" height="52" rx="5" fill="var(--color-kai)" stroke="var(--color-kai-bright)" strokeWidth="1.4" />
+      <text x="419" y="304" textAnchor="middle" fontSize="10" fontWeight="800" fill="white">30%</text>
+      <text x="419" y="320" textAnchor="middle" fontSize="8.5" fill="white">B</text>
+      <rect x="464" y="282" width="58" height="52" rx="5" fill="var(--color-kai)" stroke="var(--color-kai-bright)" strokeWidth="1.4" />
+      <text x="493" y="304" textAnchor="middle" fontSize="10" fontWeight="800" fill="white">50%</text>
+      <text x="493" y="320" textAnchor="middle" fontSize="8.5" fill="white">C</text>
+      <text x="426" y="352" textAnchor="middle" fontSize="10" fill="var(--color-fg-mut)">fractions total exactly one GPU</text>
 
-      <text x="450" y="378" textAnchor="middle" fontSize="11" fill="var(--color-fg-mut)">
-        The binder uses the reservation Pod to reserve and identify the physical GPU, then binds both fractional Pods to that same device.
+      <rect x="636" y="86" width="220" height="284" rx="7" fill="var(--color-panel)" stroke="var(--color-kai)" strokeWidth="1.5" />
+      <text x="746" y="112" textAnchor="middle" fontSize="12" fontWeight="800" fill="var(--color-kai)">reservation namespace</text>
+      <text x="746" y="131" textAnchor="middle" fontSize="9.5" fill="var(--color-fg-mut)">kai-resource-reservation</text>
+      {reservationPod(656, 158)}
+      <rect x="664" y="266" width="164" height="66" rx="5" fill="color-mix(in srgb, var(--color-accent) 14%, transparent)" stroke="var(--color-accent)" strokeWidth="1.2" />
+      <text x="746" y="289" textAnchor="middle" fontSize="10.5" fontWeight="800" fill="var(--color-accent)">GPU UUID assignment</text>
+      <text x="746" y="306" textAnchor="middle" fontSize="9" fill="var(--color-fg-mut)">binder uses reservation</text>
+      <text x="746" y="322" textAnchor="middle" fontSize="9" fill="var(--color-fg-mut)">to bind Pods to device</text>
+
+      <path className="gpu-share-line" d="M 194 138 C 238 132 252 116 288 114" fill="none" stroke="var(--color-accent-bright)" strokeWidth="1.7" markerEnd="url(#arrow)" />
+      <path className="gpu-share-line" d="M 194 262 C 244 232 256 146 288 136" fill="none" stroke="var(--color-accent-bright)" strokeWidth="1.7" markerEnd="url(#arrow)" />
+      <path className="gpu-share-line" d="M 194 386 C 250 328 262 166 288 150" fill="none" stroke="var(--color-accent-bright)" strokeWidth="1.7" markerEnd="url(#arrow)" />
+      <path className="gpu-share-line" d="M 374 164 L 374 214" fill="none" stroke="var(--color-kai)" strokeWidth="1.7" markerEnd="url(#arrow-pink)" />
+      <path className="gpu-share-line" d="M 546 290 C 594 282 612 230 656 198" fill="none" stroke="var(--color-kai)" strokeWidth="1.8" markerEnd="url(#arrow-pink)" />
+      <path d="M 746 266 L 746 238" fill="none" stroke="var(--color-accent)" strokeWidth="1.6" markerEnd="url(#arrow)" />
+
+      <text x="450" y="440" textAnchor="middle" fontSize="11" fill="var(--color-fg-mut)">
+        Three workload Pods can run under a one-GPU queue because KAI accounts each Pod by its requested fraction.
       </text>
-    </Frame>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   Chapter 22 · DRA — ResourceClaim flow and BindRequest
-   ══════════════════════════════════════════════════════════════════════════ */
-
-export function BinderDraAnimation() {
-  return (
-    <Frame title="DRA: Scheduler Selects Node, Binder Executes via BindRequest" h={310}>
-      <Box x={50} y={85} w={160} h={70} label="scheduler" sub="selects node\nmakes decision" />
-      <Box x={290} y={85} w={180} h={70} label="BindRequest" sub="pod + node + claim\nKAI-specific object" tone="gold" />
-      <Box x={560} y={85} w={175} h={70} label="binder" sub="binds pod to node\nand allocates claim" tone="teal" />
-
-      {/* DRA objects below */}
-      <Box x={50} y={215} w={160} h={64} label="Pod" sub="resources.claims\nreferences template" tone="gold" />
-      <Box x={270} y={215} w={175} h={64} label="ResourceClaim" sub="from template\ndevice allocation" />
-      <Box x={505} y={215} w={165} h={64} label="DeviceClass" sub="gpu.nvidia.com\ndevice constraints" tone="teal" />
-
-      <Arrow x1={210} y1={120} x2={290} y2={120} />
-      <Arrow x1={470} y1={120} x2={560} y2={120} />
-      <Arrow x1={640} y1={155} x2={640} y2={215} />
-      <Arrow x1={130} y1={155} x2={130} y2={215} />
-      <Arrow x1={210} y1={247} x2={270} y2={247} />
-      <Arrow x1={445} y1={247} x2={505} y2={247} />
-
-      <MovingDot path="M 210 120 L 290 120" dur="2s" />
-      <MovingDot path="M 470 120 L 560 120" color="var(--color-accent-bright)" dur="2s" delay="1s" />
-
-      <text x={50} y={300} fontSize="11" fill="var(--color-fg-mut)">
-        The scheduler writes a BindRequest rather than calling the bind API directly.
-        The binder picks it up, performs both the pod bind and the ResourceClaim allocation atomically.
-      </text>
-    </Frame>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   Chapter 22 · DRA Flow (data path)
-   ══════════════════════════════════════════════════════════════════════════ */
-
-export function DraFlow() {
-  return (
-    <Frame title="DRA GPU Claim Lifecycle" h={260}>
-      <Box x={40} y={95} w={160} h={70} label="Pod" sub="resources.claims" tone="gold" />
-      <Box x={270} y={95} w={185} h={70} label="ResourceClaim" sub="from template" />
-      <Box x={520} y={95} w={170} h={70} label="DeviceClass" sub="gpu.nvidia.com" tone="teal" />
-      <Box x={750} y={95} w={120} h={70} label="Binder" sub="BindRequest" />
-      <Arrow x1={200} y1={130} x2={270} y2={130} />
-      <Arrow x1={455} y1={130} x2={520} y2={130} />
-      <Arrow x1={690} y1={130} x2={750} y2={130} />
-      <MovingDot path="M 200 130 L 270 130" dur="2.2s" />
-      <MovingDot path="M 455 130 L 520 130" color="var(--color-accent-bright)" dur="2.2s" delay="0.8s" />
-      <MovingDot path="M 690 130 L 750 130" color="#f59e0b" dur="2.2s" delay="1.6s" />
     </Frame>
   );
 }

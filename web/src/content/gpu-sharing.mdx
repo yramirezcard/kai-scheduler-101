@@ -1,12 +1,15 @@
 # GPU Sharing: Fractions & Memory
 
-GPU sharing lets multiple Pods be placed on the same GPU device when their combined fractional requests fit. In this chapter, Pod A lives in `namespace-a`, Pod B lives in `namespace-b`, and both request `gpu-fraction: "0.5"`. KAI can place them on the same physical GPU as a 0.5 + 0.5 share even though the workload Pods are in different namespaces.
-
-The important objects are the workload Pods and the reservation Pods. The workload Pods live in the user's namespace. KAI's binder creates reservation Pods in the `kai-resource-reservation` namespace to reserve shared GPU devices during scheduling and binding.
-
-A reservation Pod is tied to the shared physical GPU reservation, not to each individual workload Pod. In this example, Pod A requests `0.5` GPU and Pod B requests `0.5` GPU. If they share the same physical GPU, KAI creates one reservation Pod for that GPU reservation, and both workload Pods are accounted against it. The reservation Pod is not a user workload; it is a scheduler bookkeeping object that prevents the same shared device from being over-allocated beyond the requested fractions.
+KAI Scheduler supports GPU sharing, allowing multiple pods to utilize the same GPU device efficiently by allocating a GPU device to multiple pods.
 
 The scheduler decides which node and device can satisfy the fractional request. During binding, KAI's binder creates a reservation Pod with GPU access in the `kai-resource-reservation` namespace. These reservation Pods need a GPU-capable runtime with NVML support; that is the mechanism KAI uses to reserve and identify the actual device before binding the fractional workload Pods to that same GPU.
+
+A reservation Pod is tied to the shared physical GPU reservation, not to each individual workload Pod. In this example, three Pods request `0.2`, `0.3`, and `0.5` GPU from the same KAI queue. The queue has `quota: 1` and `limit: 1`, so the total request can fit only because the Pods are accounted fractionally. If all three shares land on the same physical GPU, KAI creates one reservation Pod for that GPU reservation and accounts the three workload Pods against it. The reservation Pod is not a user workload; it is a scheduler bookkeeping object that prevents the same shared device from being over-allocated beyond the requested fractions.
+
+
+<Callout type="warning" title="Memory isolation">
+By default, KAI Scheduler does not enforce memory allocation limits or perform memory isolation between processes. Please use [HAMI](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/gpu-sharing/hami/README.md) to enforce memory isolation.
+</Callout>
 
 <GpuSharingAnimation />
 
@@ -14,40 +17,123 @@ The scheduler decides which node and device can satisfy the fractional request. 
 This CPU-only lab can show the scheduling intent and reservation pattern. It cannot enforce real GPU memory isolation. Production enforcement needs hardware and runtime support such as MPS or HAMi.
 </Callout>
 
-Display the fractional GPU manifest.
+In this chapter, the 20%, 30%, and 50% workloads run in `namespace-a`, `namespace-b`, and `namespace-c`. They all use the `gpu-sharing-demo` queue, whose GPU quota and limit are both `1`. KAI can still run all three Pods because `0.2 + 0.3 + 0.5 = 1.0`.
 
-```bash
-cat manifests/19-gpu-sharing/fractional-gpu-workloads.yaml
+The key request is the `gpu-fraction` annotation on the Pod. The Pod still uses a DRA claim for a GPU device, but the annotation tells KAI how much of the selected GPU to account for this workload.
+
+```yaml
+metadata:
+  labels:
+    kai.scheduler/queue: gpu-sharing-demo
+  annotations:
+    gpu-fraction: "0.2"
+spec:
+  schedulerName: kai-scheduler
+  resourceClaims:
+    - name: gpu
+      resourceClaimTemplateName: gpu-one
 ```
 
-Apply the sharing workloads.
+Display the setup manifest. It creates the three namespaces, the `gpu-sharing-demo` queue with `quota: 1` and `limit: 1`, and one `ResourceClaimTemplate` in each namespace.
 
 ```bash
-kubectl apply -f manifests/19-gpu-sharing/fractional-gpu-workloads.yaml
+cat manifests/19-gpu-sharing/00-setup.yaml
 ```
 
-List Pod A in `namespace-a`.
+Apply the setup.
+
+```bash
+kubectl apply -f manifests/19-gpu-sharing/00-setup.yaml
+```
+
+Confirm that the queue exists and is limited to one GPU.
+
+```bash
+kubectl get queue gpu-sharing-demo -o yaml
+```
+
+Display the 20% workload manifest.
+
+```bash
+cat manifests/19-gpu-sharing/01-fraction-20.yaml
+```
+
+Create the 20% workload in `namespace-a`.
+
+```bash
+kubectl apply -f manifests/19-gpu-sharing/01-fraction-20.yaml
+```
+
+Display the 30% workload manifest.
+
+```bash
+cat manifests/19-gpu-sharing/02-fraction-30.yaml
+```
+
+Create the 30% workload in `namespace-b`.
+
+```bash
+kubectl apply -f manifests/19-gpu-sharing/02-fraction-30.yaml
+```
+
+Display the 50% workload manifest.
+
+```bash
+cat manifests/19-gpu-sharing/03-fraction-50.yaml
+```
+
+Create the 50% workload in `namespace-c`.
+
+```bash
+kubectl apply -f manifests/19-gpu-sharing/03-fraction-50.yaml
+```
+
+Inspect the 20% Pod and note the node selected by KAI.
 
 ```bash
 kubectl get pods -n namespace-a -o wide
 ```
 
-List Pod B in `namespace-b`.
+Inspect the 30% Pod and compare its node placement.
 
 ```bash
 kubectl get pods -n namespace-b -o wide
 ```
 
-Look for reservation Pods. In the ideal shared-placement case for this example, you should see one reservation Pod representing the shared physical GPU. The namespace may be empty or absent in some simulated setups, so the command is tolerant.
+Inspect the 50% Pod. The important observation is that three Pods can be `Running` even though the queue is capped at one GPU.
 
 ```bash
-kubectl get pods -n kai-resource-reservation 2>/dev/null || true
+kubectl get pods -n namespace-c -o wide
 ```
 
-Describe one sharing Pod and inspect annotations.
+Show all three chapter workloads in one view. They should all be `Running` once KAI has placed the fractional requests.
 
 ```bash
-kubectl get pod -n namespace-a gpu-share-half-a -o yaml | sed -n '1,120p'
+kubectl get pods -A -l kai-scheduler-101/chapter=19 -o wide
+```
+
+List the DRA claims created for the three workload Pods.
+
+```bash
+kubectl get resourceclaims -A
+```
+
+Describe one sharing Pod and inspect the `gpu-fraction` annotation.
+
+```bash
+kubectl describe pod -n namespace-a gpu-share-20
+```
+
+Look for reservation Pods. In the ideal shared-placement case for this example, you should see one reservation Pod representing the shared physical GPU reservation. The reservation Pod normally lives in the `kai-resource-reservation` namespace, while the workload Pods can live in different namespaces.
+
+```bash
+kubectl get pods -n kai-resource-reservation
+```
+
+Inspect KAI scheduler logs to understand the placement decisions. Useful keywords to look for in the output are `gpu-fraction`, `reservation`, `ResourceReservation`, `ResourceClaim`, `gpu-sharing-demo`, and the Pod names `gpu-share-20`, `gpu-share-30`, and `gpu-share-50`.
+
+```bash
+kubectl logs -n kai-scheduler deploy/kai-scheduler-default --tail=200
 ```
 
 ## Clean Up
@@ -64,9 +150,21 @@ Delete the second workload namespace.
 kubectl delete namespace namespace-b --ignore-not-found
 ```
 
+Delete the third workload namespace.
+
+```bash
+kubectl delete namespace namespace-c --ignore-not-found
+```
+
+Delete the queue created for this chapter.
+
+```bash
+kubectl delete queue gpu-sharing-demo --ignore-not-found
+```
+
 ## What Just Happened
 
-You expressed fractional GPU intent while still using DRA claims. KAI can reason about sharing, but scheduling accounting should not be confused with runtime enforcement.
+You expressed fractional GPU intent while still using DRA claims. KAI accounted three Pods as fractions of one GPU, created or used a reservation object for the shared device, and allowed the Pods to run under a queue capped at one GPU. That scheduling accounting should not be confused with runtime memory isolation.
 
 ## Sources
 
