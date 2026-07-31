@@ -12,7 +12,6 @@
       - tar
       - unzip
     state: present
-    update_cache: true
   when: ansible_os_family == "Debian"
 
 - name: Ensure /usr/local/bin exists

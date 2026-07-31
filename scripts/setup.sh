@@ -10,10 +10,22 @@ load_env
 log "KAI Scheduler 101 launchable: starting provision"
 
 "$HERE/00-preflight.sh"
+log "Installing bootstrap host packages"
+sudo apt-get update -y
+sudo apt-get install -y \
+  ansible \
+  ca-certificates \
+  curl \
+  git \
+  gnupg \
+  lsb-release \
+  python3 \
+  python3-pip \
+  tar \
+  unzip
+
 if ! command -v ansible-playbook >/dev/null 2>&1; then
-  log "Installing ansible"
-  sudo apt-get update -y
-  sudo apt-get install -y ansible
+  die "ansible-playbook was not installed successfully"
 fi
 
 log "Running ansible bootstrap"
