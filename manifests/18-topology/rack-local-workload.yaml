@@ -27,7 +27,7 @@ metadata:
     kai-scheduler-101/chapter: "18"
 spec:
   resources:
-    gpu: { quota: 4, limit: 8, overQuotaWeight: 1 }
+    gpu: { quota: 24, limit: 48, overQuotaWeight: 1 }
 ---
 apiVersion: batch/v1
 kind: Job
@@ -40,14 +40,15 @@ metadata:
     kai.scheduler/topology: lab-topology
     kai.scheduler/topology-required-placement: kai.scheduler/topology-block
     kai.scheduler/topology-preferred-placement: kai.scheduler/topology-rack
-    kai.scheduler/batch-min-member: "4"
+    kai.scheduler/batch-min-member: "12"
 spec:
-  parallelism: 4
-  completions: 4
+  parallelism: 12
+  completions: 12
   template:
     metadata: { labels: { kai.scheduler/queue: topology-demo, kai-scheduler-101/chapter: "18" } }
     spec:
       schedulerName: kai-scheduler
+      priorityClassName: train
       restartPolicy: Never
       tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
       resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]

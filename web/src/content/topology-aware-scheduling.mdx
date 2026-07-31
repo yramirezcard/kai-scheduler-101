@@ -7,11 +7,25 @@ KAI gets topology information from two places:
 - Kubernetes node labels describe where each node belongs, such as `kai.scheduler/topology-block`, `kai.scheduler/topology-rack`, and `kubernetes.io/hostname`.
 - The KAI `Topology` CRD defines the ordered hierarchy of those labels. In this lab, `lab-topology` is `block -> rack -> host`.
 
+A minimal `Topology` object maps each hierarchy level to a Kubernetes node label:
+
+```yaml
+apiVersion: kai.scheduler/v1
+kind: Topology
+metadata:
+  name: lab-topology
+spec:
+  levels:
+    - nodeLabel: kai.scheduler/topology-block
+    - nodeLabel: kai.scheduler/topology-rack
+    - nodeLabel: kubernetes.io/hostname
+```
+
 Workloads opt into topology-aware placement with annotations. `kai.scheduler/topology` selects the Topology object. A required placement annotation sets the broadest domain that must contain the whole workload. A preferred placement annotation asks the scheduler to keep Pods closer together inside that required boundary when possible.
 
-The sample workload requires block-level placement and prefers rack-level locality. With the 24-node KWOK fleet, there are two blocks, each with three racks, and each rack has four hosts. The Job asks for four workers with `batch-min-member: "4"`. Because a single rack has exactly four hosts in the simulated pool, the expected result is that KAI can satisfy the required block constraint and should prefer placing the four workers in one rack when resources are available. If the preferred rack cannot fit all workers, the scheduler can still place within the required block boundary rather than spreading across both blocks.
+The first sample workload requires block-level placement and prefers rack-level locality. With the 24-node KWOK fleet, there are two blocks, each with three racks, and each rack has four hosts. A four-worker job would be too small to show why that bigger shape matters, so this chapter uses a 12-worker GPU gang. The expected result is that KAI keeps all workers inside one block and, when feasible, prefers one rack inside that block. If the preferred rack cannot fit all workers, the scheduler can still place within the required block boundary rather than spreading across both blocks.
 
-KAI also supports Multi-Level Topology Aware Scheduling for hierarchical PodGroups. Instead of giving one topology rule to the whole workload, each SubGroup can carry its own `topologyConstraint`. For example, a root PodGroup can require the entire workload inside one zone, a mid-level SubGroup can require prefill and decode components inside a smaller domain, and leaf SubGroups can require their workers on one rack. This is useful for distributed serving and other multi-role workloads where not every component has the same locality requirement.
+KAI also supports Multi-Level Topology Aware Scheduling for hierarchical PodGroups. Instead of giving one topology rule to the whole workload, each SubGroup can carry its own `topologyConstraint`. This is a natural fit for Grove, which you introduced earlier: the root `PodCliqueSet` can require one block, prefill and decode `PodCliqueScalingGroup`s can each require a rack, and tightly coupled cliques can request host-level packing. The second hands-on manifest uses Grove CRDs to describe 20 one-GPU Pods so the multi-level constraints are visible on the 24-node topology.
 
 <TopologyMap />
 
@@ -51,6 +65,12 @@ Apply the Topology CR. This tells KAI how to turn the KWOK node labels into a hi
 kubectl apply -f manifests/18-topology/topology.yaml
 ```
 
+Apply the PriorityClasses used by the training and serving workloads.
+
+```bash
+kubectl apply -f manifests/10-priority/priority-classes.yaml
+```
+
 Display the rack-local workload. Focus on the topology annotations and the gang minimum.
 
 ```bash
@@ -69,7 +89,61 @@ Inspect the Pod placement.
 kubectl get pods -n kai-lab18 -o wide
 ```
 
-Show the topology labels on the simulated nodes again so you can compare the scheduled Pod nodes against their block and rack.
+Delete the rack-local training job before the multi-level serving example. This keeps the second example focused on topology behavior rather than leftover capacity pressure.
+
+```bash
+kubectl delete job -n kai-lab18 rack-local-training --ignore-not-found
+```
+
+Display the multi-level serving workload. This example uses Grove CRDs directly: `ClusterTopologyBinding` maps Grove domains to node labels, and `PodCliqueSet` describes the router, prefill, and decode serving roles with multi-level topology constraints.
+
+```bash
+cat manifests/18-topology/multilevel-serving-workload.yaml
+```
+
+Apply the multi-level serving workload.
+
+```bash
+kubectl apply -f manifests/18-topology/multilevel-serving-workload.yaml
+```
+
+Inspect Grove's topology binding. It maps the Grove domains `block`, `rack`, and `host` to the same node labels used by KAI's `Topology` object.
+
+```bash
+kubectl get clustertopologybinding grove-lab-topology -o yaml
+```
+
+Inspect the Grove `PodCliqueSet`. Look for the root block-level packing constraint and the role-specific clique constraints.
+
+```bash
+kubectl get podcliqueset -n kai-lab18 multilevel-serving -o yaml
+```
+
+List the `PodClique` resources that Grove reconciled from the serving manifest.
+
+```bash
+kubectl get podcliques.grove.io -n kai-lab18 -o wide
+```
+
+List the `PodCliqueScalingGroup` resources. These correspond to the prefill and decode groups in the manifest.
+
+```bash
+kubectl get podcliquescalinggroups.grove.io -n kai-lab18 -o wide
+```
+
+Inspect the scheduler-facing Grove `PodGang` resources created by the operator.
+
+```bash
+kubectl get podgangs.scheduler.grove.io -n kai-lab18 -o yaml
+```
+
+Inspect the generated serving Pods and their role labels.
+
+```bash
+kubectl get pods -n kai-lab18 -l app=multilevel-serving -L role -o wide
+```
+
+Compare the Pod nodes against the 24-node topology labels. The interesting pattern is not merely that Pods are running; it is which block, rack, and host each role landed on.
 
 ```bash
 kubectl get nodes -l type=kwok -L kai.scheduler/topology-block,kai.scheduler/topology-rack
@@ -81,7 +155,25 @@ Read namespace events if placement is pending or if the topology plugin explains
 kubectl get events -n kai-lab18 --sort-by=.lastTimestamp
 ```
 
+Inspect Grove operator logs. These logs explain how Grove reconciled the topology-aware `PodCliqueSet` into cliques, scaling groups, gangs, and Pods.
+
+```bash
+kubectl logs -n grove-system -l app.kubernetes.io/name=grove-operator --tail=200
+```
+
+Inspect scheduler logs for topology decisions. Look for references to topology, PodGangs, or placement feasibility.
+
+```bash
+kubectl logs -n kai-scheduler deploy/kai-scheduler-default --tail=200
+```
+
 ## Clean Up
+
+Delete the multi-level Grove serving workload.
+
+```bash
+kubectl delete -f manifests/18-topology/multilevel-serving-workload.yaml --ignore-not-found
+```
 
 Delete the topology workload namespace. This removes the Job, Pods, and ResourceClaims.
 
@@ -107,9 +199,15 @@ Return the simulated fleet to the original four KWOK nodes so later GPU labs see
 kubectl delete node kwok-gpu-05 kwok-gpu-06 kwok-gpu-07 kwok-gpu-08 kwok-gpu-09 kwok-gpu-10 kwok-gpu-11 kwok-gpu-12 kwok-gpu-13 kwok-gpu-14 kwok-gpu-15 kwok-gpu-16 kwok-gpu-17 kwok-gpu-18 kwok-gpu-19 kwok-gpu-20 kwok-gpu-21 kwok-gpu-22 kwok-gpu-23 kwok-gpu-24 --ignore-not-found
 ```
 
+Reapply the original four-node manifest. This restores the normal lab labels, including the two H100 and two L40S split used by the shard chapters.
+
+```bash
+kubectl apply -f kwok/fake-gpu-nodes-4.yaml
+```
+
 ## What Just Happened
 
-You turned labels into a topology tree and asked KAI to place a gang with locality constraints. The required block constraint prevents cross-block placement. The preferred rack constraint asks KAI to keep workers closer together inside the selected block, matching the official example pattern: first pick a feasible required domain, then order nodes inside that domain to improve local proximity.
+You turned labels into a topology tree and asked KAI to place two topology-aware workloads. The 12-GPU gang made the 24-node cluster meaningful by requiring a larger placement decision than a tiny four-worker job. The multi-level serving example then showed the hierarchical case: the root workload stays within one block, mid-level prefill and decode groups can each express rack locality, and leaf groups can add stricter host or rack requirements.
 
 ## Sources
 

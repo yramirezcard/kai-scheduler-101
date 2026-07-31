@@ -1,0 +1,173 @@
+apiVersion: grove.io/v1alpha1
+kind: ClusterTopologyBinding
+metadata:
+  name: grove-lab-topology
+  labels:
+    kai-scheduler-101/chapter: "18"
+spec:
+  levels:
+    - domain: block
+      key: kai.scheduler/topology-block
+    - domain: rack
+      key: kai.scheduler/topology-rack
+    - domain: host
+      key: kubernetes.io/hostname
+  schedulerTopologyBindings:
+    - schedulerName: kai-scheduler
+      topologyReference: lab-topology
+---
+apiVersion: grove.io/v1alpha1
+kind: PodCliqueSet
+metadata:
+  name: multilevel-serving
+  namespace: kai-lab18
+  labels:
+    app: multilevel-serving
+    kai-scheduler-101/chapter: "18"
+spec:
+  replicas: 1
+  template:
+    priorityClassName: inference
+    cliqueStartupType: CliqueStartupTypeInOrder
+    topologyConstraint:
+      topologyName: grove-lab-topology
+      pack:
+        required: block
+    cliques:
+      - name: router
+        topologyConstraint:
+          pack:
+            required: rack
+            preferred: host
+        labels:
+          app: multilevel-serving
+          role: router
+          kai.scheduler/queue: topology-demo
+          kai-scheduler-101/chapter: "18"
+        spec:
+          roleName: router
+          replicas: 2
+          minAvailable: 2
+          podSpec:
+            schedulerName: kai-scheduler
+            tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+            resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
+            containers:
+              - name: router
+                image: ubuntu:22.04
+                command: ["bash", "-lc"]
+                args: ["echo router; sleep 3600"]
+                resources: { claims: [ { name: gpu } ] }
+      - name: prefill-leader
+        topologyConstraint:
+          pack:
+            required: host
+        labels:
+          app: multilevel-serving
+          role: prefill-leader
+          kai.scheduler/queue: topology-demo
+          kai-scheduler-101/chapter: "18"
+        spec:
+          roleName: prefill-leader
+          replicas: 2
+          minAvailable: 2
+          podSpec:
+            schedulerName: kai-scheduler
+            tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+            resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
+            containers:
+              - name: prefill-leader
+                image: ubuntu:22.04
+                command: ["bash", "-lc"]
+                args: ["echo prefill leader; sleep 3600"]
+                resources: { claims: [ { name: gpu } ] }
+      - name: prefill-worker
+        topologyConstraint:
+          pack:
+            required: rack
+            preferred: host
+        labels:
+          app: multilevel-serving
+          role: prefill-worker
+          kai.scheduler/queue: topology-demo
+          kai-scheduler-101/chapter: "18"
+        spec:
+          roleName: prefill-worker
+          replicas: 6
+          minAvailable: 6
+          podSpec:
+            schedulerName: kai-scheduler
+            tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+            resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
+            containers:
+              - name: prefill-worker
+                image: ubuntu:22.04
+                command: ["bash", "-lc"]
+                args: ["echo prefill worker; sleep 3600"]
+                resources: { claims: [ { name: gpu } ] }
+      - name: decode-leader
+        topologyConstraint:
+          pack:
+            required: host
+        labels:
+          app: multilevel-serving
+          role: decode-leader
+          kai.scheduler/queue: topology-demo
+          kai-scheduler-101/chapter: "18"
+        spec:
+          roleName: decode-leader
+          replicas: 2
+          minAvailable: 2
+          podSpec:
+            schedulerName: kai-scheduler
+            tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+            resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
+            containers:
+              - name: decode-leader
+                image: ubuntu:22.04
+                command: ["bash", "-lc"]
+                args: ["echo decode leader; sleep 3600"]
+                resources: { claims: [ { name: gpu } ] }
+      - name: decode-worker
+        topologyConstraint:
+          pack:
+            required: rack
+            preferred: host
+        labels:
+          app: multilevel-serving
+          role: decode-worker
+          kai.scheduler/queue: topology-demo
+          kai-scheduler-101/chapter: "18"
+        spec:
+          roleName: decode-worker
+          replicas: 8
+          minAvailable: 8
+          podSpec:
+            schedulerName: kai-scheduler
+            tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+            resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
+            containers:
+              - name: decode-worker
+                image: ubuntu:22.04
+                command: ["bash", "-lc"]
+                args: ["echo decode worker; sleep 3600"]
+                resources: { claims: [ { name: gpu } ] }
+    podCliqueScalingGroups:
+      - name: prefill
+        cliqueNames:
+          - prefill-leader
+          - prefill-worker
+        replicas: 1
+        minAvailable: 1
+        topologyConstraint:
+          pack:
+            required: rack
+      - name: decode
+        cliqueNames:
+          - decode-leader
+          - decode-worker
+        replicas: 1
+        minAvailable: 1
+        topologyConstraint:
+          pack:
+            required: rack
