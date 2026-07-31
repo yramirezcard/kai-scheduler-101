@@ -12,6 +12,8 @@ WEB_DIR="$REPO_ROOT/web"
 PORT="${WORKSHOP_PORT:-3000}"
 WORKSPACE="${LAB_WORKSPACE:-$HOME/kai-scheduler-101-labs}"
 [[ -d "$WEB_DIR" ]] || { warn "web/ not found — skipping workshop site."; exit 0; }
+export NEEDRESTART_MODE=l
+export DEBIAN_FRONTEND=noninteractive
 
 # --- Node 20+ and node-pty build deps ---
 need_node=1
@@ -62,7 +64,17 @@ UNIT
 sudo systemctl daemon-reload
 sudo systemctl enable --now kai-scheduler-101-workshop.service
 sudo systemctl restart kai-scheduler-101-workshop.service
-sleep 3
-code="$(curl -sS -m6 -o /dev/null -w '%{http_code}' "http://127.0.0.1:${PORT}/" 2>/dev/null || echo 000)"
+code="000"
+for _ in {1..20}; do
+  code="$(curl -sS -m3 -o /dev/null -w '%{http_code}' "http://127.0.0.1:${PORT}/" 2>/dev/null || echo 000)"
+  [[ "$code" == "200" ]] && break
+  sleep 1
+done
 log "Workshop site: http://<host>:${PORT}/  (local check -> HTTP ${code})"
+if [[ "$code" != "200" ]]; then
+  warn "Workshop service did not return HTTP 200 on 127.0.0.1:${PORT}."
+  sudo systemctl --no-pager --full status kai-scheduler-101-workshop.service || true
+  sudo journalctl -u kai-scheduler-101-workshop.service --no-pager -n 80 || true
+  exit 1
+fi
 log "Expose host port ${PORT} as a Brev tunnel; learners open it and follow the lessons."

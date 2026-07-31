@@ -10,6 +10,10 @@ load_env
 log "KAI Scheduler 101 launchable: starting provision"
 
 "$HERE/00-preflight.sh"
+export NEEDRESTART_MODE=l
+export DEBIAN_FRONTEND=noninteractive
+sudo mkdir -p /etc/needrestart/conf.d
+printf "%s\n" "\$nrconf{restart} = 'l';" | sudo tee /etc/needrestart/conf.d/kai-scheduler-101.conf >/dev/null
 log "Installing bootstrap host packages"
 sudo apt-get update -y
 sudo apt-get install -y \
