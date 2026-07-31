@@ -7,38 +7,165 @@ The common integration contract is simple:
 - generated Pods set `schedulerName: kai-scheduler`;
 - generated workload metadata carries `kai.scheduler/queue`;
 - distributed workloads get PodGroups or subgroup metadata;
-- GPU workloads use DRA claims in this lab.
 
-Display the KubeRay-style snippet.
+## Ray Clusters
 
-```bash
-cat manifests/23-integrations/kuberay-kai-snippet.yaml
+Ray users normally submit a `RayCluster` or `RayJob`; the KubeRay operator then creates the head and worker Pods. KAI does not need to own Ray. The important part is that the Ray pod templates carry the scheduler name, queue label, and any GPU claim references.
+
+```yaml
+apiVersion: ray.io/v1
+kind: RayCluster
+metadata:
+  name: ray-kai-example
+spec:
+  headGroupSpec:
+    template:
+      metadata:
+        labels:
+          kai.scheduler/queue: research
+      spec:
+        schedulerName: kai-scheduler
+        containers:
+          - name: ray-head
+            image: rayproject/ray:2.46.0
+  workerGroupSpecs:
+    - groupName: gpu-workers
+      replicas: 4
+      template:
+        metadata:
+          labels:
+            kai.scheduler/queue: research
+        spec:
+          schedulerName: kai-scheduler
+          resourceClaims:
+            - name: gpu
+              resourceClaimTemplateName: gpu-one
+          containers:
+            - name: ray-worker
+              image: rayproject/ray:2.46.0
+              resources:
+                claims:
+                  - name: gpu
 ```
 
-Validate the snippet client-side. This does not require the KubeRay CRD to exist on the cluster.
+## Kubeflow Training Jobs
 
-```bash
-kubectl apply --dry-run=client -f manifests/23-integrations/kuberay-kai-snippet.yaml
+Kubeflow training operators create worker Pods from replica templates. The KAI fields belong in each replica pod template that should be scheduled by KAI. For gang-style training, the controller or an admission layer can also add PodGroup metadata so all workers are treated as one scheduling unit.
+
+```yaml
+apiVersion: kubeflow.org/v1
+kind: PyTorchJob
+metadata:
+  name: pytorch-kai-example
+spec:
+  pytorchReplicaSpecs:
+    Worker:
+      replicas: 8
+      template:
+        metadata:
+          labels:
+            kai.scheduler/queue: training
+          annotations:
+            pod-group.scheduling.k8s.io/name: pytorch-kai-example
+            pod-group.scheduling.k8s.io/min-available: "8"
+        spec:
+          schedulerName: kai-scheduler
+          resourceClaims:
+            - name: gpu
+              resourceClaimTemplateName: gpu-one
+          containers:
+            - name: pytorch
+              image: pytorch/pytorch:2.7.1-cuda12.8-cudnn9-runtime
+              resources:
+                claims:
+                  - name: gpu
 ```
 
-Search the snippet for KAI queue labels.
+## LeaderWorkerSet
 
-```bash
-grep -n 'kai.scheduler/queue' manifests/23-integrations/kuberay-kai-snippet.yaml
+LeaderWorkerSet models inference or distributed serving groups with a leader and workers. The pod template is where KAI integration shows up: place the serving group into a queue, use `kai-scheduler`, and request GPUs through the same device-claim workflow used elsewhere in the lab.
+
+```yaml
+apiVersion: leaderworkerset.x-k8s.io/v1
+kind: LeaderWorkerSet
+metadata:
+  name: lws-kai-example
+spec:
+  replicas: 2
+  leaderWorkerTemplate:
+    size: 4
+    leaderTemplate:
+      metadata:
+        labels:
+          kai.scheduler/queue: inference
+      spec:
+        schedulerName: kai-scheduler
+        containers:
+          - name: leader
+            image: ubuntu:22.04
+    workerTemplate:
+      metadata:
+        labels:
+          kai.scheduler/queue: inference
+      spec:
+        schedulerName: kai-scheduler
+        resourceClaims:
+          - name: gpu
+            resourceClaimTemplateName: gpu-one
+        containers:
+          - name: worker
+            image: ubuntu:22.04
+            resources:
+              claims:
+                - name: gpu
 ```
 
-Search the snippet for DRA claim usage.
+## JobSets
 
-```bash
-grep -n -E 'resourceClaims|claims:' manifests/23-integrations/kuberay-kai-snippet.yaml
+JobSet is useful when a distributed job has multiple replicated job roles. Each replicated job template can carry KAI scheduler fields. This lets KAI account the full workload against a queue while still letting JobSet own retries and job orchestration.
+
+```yaml
+apiVersion: jobset.x-k8s.io/v1alpha2
+kind: JobSet
+metadata:
+  name: jobset-kai-example
+spec:
+  replicatedJobs:
+    - name: workers
+      replicas: 4
+      template:
+        spec:
+          parallelism: 2
+          completions: 2
+          template:
+            metadata:
+              labels:
+                kai.scheduler/queue: batch
+              annotations:
+                pod-group.scheduling.k8s.io/name: jobset-kai-example
+                pod-group.scheduling.k8s.io/min-available: "8"
+            spec:
+              schedulerName: kai-scheduler
+              resourceClaims:
+                - name: gpu
+                  resourceClaimTemplateName: gpu-one
+              containers:
+                - name: worker
+                  image: ubuntu:22.04
+                  resources:
+                    claims:
+                      - name: gpu
 ```
 
-## What Just Happened
+## Integration Pattern
 
-You inspected KAI from the perspective of another controller. Integrations usually do not need special magic; they need to generate the same scheduling metadata you used manually throughout the lab.
+You inspected KAI from the perspective of other controllers. Integrations usually do not need special magic; they need to generate the same scheduling metadata you used manually throughout the lab. The controller owns the user-facing API, and KAI owns the scheduling decision for the Pods that API produces.
 
 ## Sources
 
 - [Batch Scheduling](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/batch/README.md)
 - [KAI DRA docs](https://github.com/kai-scheduler/KAI-Scheduler/blob/main/docs/dra/README.md)
 - [KubeRay](https://github.com/ray-project/kuberay)
+- [Kubeflow Training Operator](https://github.com/kubeflow/training-operator)
+- [LeaderWorkerSet](https://github.com/kubernetes-sigs/lws)
+- [JobSet](https://github.com/kubernetes-sigs/jobset)

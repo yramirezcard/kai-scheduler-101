@@ -42,7 +42,7 @@ export const CURRICULUM: Part[] = [
   { id: "operations", title: "Part IX - Operations & Integration", subtitle: "Observe, debug, and connect KAI to the ecosystem", lessons: [
     { slug: "metrics-observability", title: "Metrics & Observability", blurb: "Create a KAI ServiceMonitor and query KAI metrics in Prometheus.", minutes: 4, hasLab: true },
     { slug: "debugging-snapshots", title: "Debugging with Snapshots", blurb: "Use the snapshot endpoint and replay tool as an escalation path.", minutes: 2, hasLab: true },
-    { slug: "ecosystem-integrations", title: "Ecosystem Integrations", blurb: "Review KubeRay, Kubeflow trainer, Grove/Dynamo, and autoscaling patterns.", minutes: 2, hasLab: true },
+    { slug: "ecosystem-integrations", title: "Ecosystem Integrations", blurb: "Review KubeRay, Kubeflow Training Operator, LeaderWorkerSet, and JobSet integration patterns.", minutes: 2 },
   ]},
 ];
 

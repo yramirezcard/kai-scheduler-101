@@ -11,3 +11,4 @@
     - { role: "03-kwok", tags: [kwok] }
     - { role: "04-fake-gpu-operator", tags: [fake-gpu-operator] }
     - { role: "05-grove", tags: [grove] }
+    - { role: "06-observability", tags: [observability, prometheus, grafana] }

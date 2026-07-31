@@ -1,0 +1,24 @@
+---
+- name: Install kube-prometheus-stack with default settings
+  ansible.builtin.shell: |
+    set -euo pipefail
+    export KUBECONFIG="{{ repo_root }}/kubeconfig"
+
+    version_args=()
+    if [[ -n "{{ kube_prometheus_stack_version }}" ]]; then
+      version_args=(--version "{{ kube_prometheus_stack_version }}")
+    fi
+
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --force-update
+    helm repo update prometheus-community
+
+    helm upgrade -i kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+      -n "{{ monitoring_namespace }}" --create-namespace \
+      "${version_args[@]}"
+
+    kubectl -n "{{ monitoring_namespace }}" rollout status deployment/kube-prometheus-stack-operator --timeout=240s || true
+    kubectl -n "{{ monitoring_namespace }}" get pods
+  args:
+    executable: /bin/bash
+  become: false
+  changed_when: false

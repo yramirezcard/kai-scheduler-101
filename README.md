@@ -1,6 +1,6 @@
 # KAI Scheduler 101 Brev Launchable
 
-Hands-on KAI Scheduler lab for a CPU-only Brev VM. The bootstrap creates a single-node k3s cluster, installs KWOK, creates simulated GPU nodes, installs fake-gpu-operator, installs Grove, and serves an interactive Next.js tutorial with an embedded shell.
+Hands-on KAI Scheduler lab for a CPU-only Brev VM. The bootstrap creates a single-node k3s cluster, installs KWOK, creates simulated GPU nodes, installs fake-gpu-operator, installs Grove, installs Prometheus and Grafana with kube-prometheus-stack, and serves an interactive Next.js tutorial with an embedded shell.
 
 ## What This Lab Teaches
 
@@ -43,6 +43,8 @@ Optional Launchable variables:
 | `GROVE_VERSION` | `v0.1.0-alpha.11` |
 | `GROVE_NAMESPACE` | `grove-system` |
 | `KWOK_VERSION` | `v0.7.0` |
+| `KUBE_PROMETHEUS_STACK_VERSION` | unset, uses chart repository default |
+| `MONITORING_NAMESPACE` | `monitoring` |
 
 `FAKE_GPU_OPERATOR_VERSION` pins the OCI Helm chart from `oci://ghcr.io/run-ai/fake-gpu-operator/fake-gpu-operator`. The GitHub release tag is `v0.2.0`, while Helm expects chart version `0.2.0`; the setup role accepts either form and strips a leading `v` before calling Helm.
 
@@ -51,7 +53,7 @@ Optional Launchable variables:
 ## Repo Layout
 
 ```text
-ansible/      readable bootstrap roles for host prep, k3s, tooling, KWOK, fake GPUs, Grove
+ansible/      readable bootstrap roles for host prep, k3s, tooling, KWOK, fake GPUs, Grove, observability
 kwok/         simulated node manifests, including 4-node and 24-node fleets
 manifests/    YAML used by hands-on lessons
 scripts/      Brev wrapper, setup orchestration, and workshop service setup
