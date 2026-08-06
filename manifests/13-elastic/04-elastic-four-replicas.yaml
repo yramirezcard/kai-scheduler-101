@@ -1,0 +1,115 @@
+apiVersion: scheduling.run.ai/v2
+kind: PodGroup
+metadata:
+  name: elastic-four-replicas
+  namespace: kai-lab13
+  labels:
+    kai-scheduler-101/chapter: "13"
+spec:
+  queue: elastic-demo
+  minSubGroup: 3
+  subGroups:
+    - name: replica-1
+      minMember: 1
+    - name: replica-2
+      minMember: 1
+    - name: replica-3
+      minMember: 1
+    - name: replica-4
+      minMember: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: elastic-replica-1
+  namespace: kai-lab13
+  labels:
+    app: elastic-four-replicas
+    kai.scheduler/queue: elastic-demo
+    kai.scheduler/subgroup-name: replica-1
+    kai-scheduler-101/chapter: "13"
+  annotations:
+    pod-group-name: elastic-four-replicas
+spec:
+  schedulerName: kai-scheduler
+  restartPolicy: Never
+  tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+  resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
+  containers:
+    - name: worker
+      image: ubuntu:22.04
+      command: ["bash", "-lc"]
+      args: ["echo elastic replica 1; sleep 3600"]
+      resources: { claims: [ { name: gpu } ] }
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: elastic-replica-2
+  namespace: kai-lab13
+  labels:
+    app: elastic-four-replicas
+    kai.scheduler/queue: elastic-demo
+    kai.scheduler/subgroup-name: replica-2
+    kai-scheduler-101/chapter: "13"
+  annotations:
+    pod-group-name: elastic-four-replicas
+spec:
+  schedulerName: kai-scheduler
+  restartPolicy: Never
+  tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+  resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
+  containers:
+    - name: worker
+      image: ubuntu:22.04
+      command: ["bash", "-lc"]
+      args: ["echo elastic replica 2; sleep 3600"]
+      resources: { claims: [ { name: gpu } ] }
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: elastic-replica-3
+  namespace: kai-lab13
+  labels:
+    app: elastic-four-replicas
+    kai.scheduler/queue: elastic-demo
+    kai.scheduler/subgroup-name: replica-3
+    kai-scheduler-101/chapter: "13"
+  annotations:
+    pod-group-name: elastic-four-replicas
+spec:
+  schedulerName: kai-scheduler
+  restartPolicy: Never
+  tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+  resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
+  containers:
+    - name: worker
+      image: ubuntu:22.04
+      command: ["bash", "-lc"]
+      args: ["echo elastic replica 3; sleep 3600"]
+      resources: { claims: [ { name: gpu } ] }
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: elastic-replica-4
+  namespace: kai-lab13
+  labels:
+    app: elastic-four-replicas
+    kai.scheduler/queue: elastic-demo
+    kai.scheduler/subgroup-name: replica-4
+    kai-scheduler-101/chapter: "13"
+  annotations:
+    pod-group-name: elastic-four-replicas
+spec:
+  schedulerName: kai-scheduler
+  restartPolicy: Never
+  tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+  resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
+  containers:
+    - name: worker
+      image: ubuntu:22.04
+      command: ["bash", "-lc"]
+      args: ["echo elastic replica 4; sleep 3600"]
+      resources: { claims: [ { name: gpu } ] }

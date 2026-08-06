@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leaf-target
+  namespace: kai-lab05
+  labels:
+    kai-scheduler-101/chapter: "05"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: leaf-target
+  template:
+    metadata:
+      labels:
+        app: leaf-target
+        kai.scheduler/queue: fm-training
+        kai-scheduler-101/chapter: "05"
+    spec:
+      schedulerName: kai-scheduler
+      tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+      resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
+      containers:
+        - name: worker
+          image: ubuntu:22.04
+          command: ["bash", "-lc"]
+          args: ["echo scheduled on the fm-training leaf queue; sleep 3600"]
+          resources: { claims: [ { name: gpu } ] }

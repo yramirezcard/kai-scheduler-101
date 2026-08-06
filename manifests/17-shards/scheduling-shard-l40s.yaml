@@ -5,8 +5,7 @@ metadata:
   labels:
     kai-scheduler-101/chapter: "17"
 spec:
-  partitionLabelKey: nvidia.com/gpu.machine
-  partitionLabelValue: NVIDIA-L40S
+  partitionLabelValue: l40s
   args:
     actions: [allocate, consolidate]
   queueDepthPerAction:

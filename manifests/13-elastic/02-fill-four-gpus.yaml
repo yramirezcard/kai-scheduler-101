@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elastic-fill-four
+  namespace: kai-lab13
+  labels:
+    kai-scheduler-101/chapter: "13"
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: elastic-fill-four
+  template:
+    metadata:
+      labels:
+        app: elastic-fill-four
+        kai.scheduler/queue: elastic-demo
+        kai-scheduler-101/chapter: "13"
+    spec:
+      schedulerName: kai-scheduler
+      tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
+      resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
+      containers:
+        - name: worker
+          image: ubuntu:22.04
+          command: ["bash", "-lc"]
+          args: ["echo occupying four simulated GPUs; sleep 3600"]
+          resources: { claims: [ { name: gpu } ] }

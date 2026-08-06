@@ -46,9 +46,135 @@ Describe a leaf queue. This is a valid workload target because it has no childre
 kubectl describe queue fm-training
 ```
 
+Display the workload setup manifest. It creates a namespace and a one-GPU `ResourceClaimTemplate` used by the two workload tests.
+
+```bash
+cat manifests/05-hierarchy/workload-setup.yaml
+```
+
+Apply the workload setup.
+
+```bash
+kubectl apply -f manifests/05-hierarchy/workload-setup.yaml
+```
+
+Now display the invalid workload manifest. This Deployment intentionally targets `foundation-models`, which is a middle-layer queue with child queues. KAI expects workload submissions to target leaf queues, so this workload should not be scheduled there.
+
+```bash
+cat manifests/05-hierarchy/non-leaf-workload.yaml
+```
+
+Apply the invalid workload. The Kubernetes API may accept the Deployment object, but KAI should keep its Pod unscheduled because `foundation-models` is not a valid leaf submission queue.
+
+```bash
+kubectl apply -f manifests/05-hierarchy/non-leaf-workload.yaml
+```
+
+Inspect the Pod. It should stay `Pending` because the queue target is not schedulable.
+
+```bash
+kubectl get pods -n kai-lab05 -l app=non-leaf-target -o wide
+```
+
+Describe the Pod to see the scheduling message. Look for wording that points to the queue being invalid, non-leaf, or not a legal workload target.
+
+```bash
+kubectl describe pod -n kai-lab05 -l app=non-leaf-target
+```
+
+Read recent namespace events. This is often the clearest place to see the scheduler-facing error surfaced back to the workload.
+
+```bash
+kubectl get events -n kai-lab05 --sort-by=.lastTimestamp
+```
+
+Inspect recent scheduler logs and look for `foundation-models`, `non-leaf-target`, `leaf`, `queue`, or `hierarchy`.
+
+```bash
+kubectl logs -n kai-scheduler deploy/kai-scheduler-default --tail=200
+```
+
+Delete the invalid workload before continuing so it does not keep producing pending events.
+
+```bash
+kubectl delete -f manifests/05-hierarchy/non-leaf-workload.yaml --ignore-not-found
+```
+
+Before scheduling a valid workload, describe the leaf queue and its ancestors. These snapshots show the baseline allocation before the workload consumes capacity.
+
+```bash
+kubectl describe queue fm-training
+```
+
+Describe the middle-layer parent queue before scheduling.
+
+```bash
+kubectl describe queue foundation-models
+```
+
+Describe the top-level parent queue before scheduling.
+
+```bash
+kubectl describe queue ai-org
+```
+
+Display the valid workload manifest. This Deployment targets `fm-training`, a leaf queue under `foundation-models`.
+
+```bash
+cat manifests/05-hierarchy/leaf-workload.yaml
+```
+
+Apply the valid leaf-queue workload.
+
+```bash
+kubectl apply -f manifests/05-hierarchy/leaf-workload.yaml
+```
+
+Confirm the leaf workload Pods are scheduled.
+
+```bash
+kubectl get pods -n kai-lab05 -l app=leaf-target -o wide
+```
+
+Describe the leaf queue again. The allocation should now reflect the two one-GPU Pods submitted to `fm-training`.
+
+```bash
+kubectl describe queue fm-training
+```
+
+Describe the middle-layer parent again. Its allocation should include the capacity consumed by the child leaf queue.
+
+```bash
+kubectl describe queue foundation-models
+```
+
+Describe the top-level parent again. Its allocation should also roll up the child usage through the hierarchy.
+
+```bash
+kubectl describe queue ai-org
+```
+
 ## Clean Up
 
-This chapter created only cluster-scoped queues. Delete leaf queues before parent queues so the hierarchy can be removed cleanly.
+Delete the valid workload first so it releases the capacity allocated through the queue hierarchy.
+
+```bash
+kubectl delete -f manifests/05-hierarchy/leaf-workload.yaml --ignore-not-found
+```
+
+Delete the invalid workload in case it still exists.
+
+```bash
+kubectl delete -f manifests/05-hierarchy/non-leaf-workload.yaml --ignore-not-found
+```
+
+Delete the workload namespace and ResourceClaimTemplate.
+
+```bash
+kubectl delete -f manifests/05-hierarchy/workload-setup.yaml --ignore-not-found
+```
+
+Delete leaf queues before parent queues so the hierarchy can be removed cleanly.
 
 ```bash
 kubectl delete queue fm-training fm-evaluation foundation-models applied-ai ai-org --ignore-not-found
@@ -56,7 +182,7 @@ kubectl delete queue fm-training fm-evaluation foundation-models applied-ai ai-o
 
 ## What Just Happened
 
-You built an organization-shaped quota tree. The top queue protects total AI capacity, the department queues divide that capacity between larger groups, and leaf queues become the actual submission targets for workloads.
+You built an organization-shaped quota tree. The top queue protects total AI capacity, the department queues divide that capacity between larger groups, and leaf queues become the actual submission targets for workloads. The non-leaf test showed why KAI keeps internal hierarchy nodes separate from workload submission targets, and the leaf workload showed allocation rolling up from `fm-training` to `foundation-models` to `ai-org`.
 
 ## Sources
 

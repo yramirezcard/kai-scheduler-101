@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kai-snapshot-replay
+  namespace: kai-lab22
+  labels:
+    kai-scheduler-101/chapter: "22"
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: kai-snapshot-replay
+        kai-scheduler-101/chapter: "22"
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: snapshot
+          emptyDir: {}
+      initContainers:
+        - name: capture
+          image: curlimages/curl:8.10.1
+          command: ["sh", "-c"]
+          args:
+            - >
+              curl -fsS
+              http://kai-scheduler-default.kai-scheduler.svc.cluster.local:8080/get-snapshot
+              -o /snapshot/snapshot.zip
+          volumeMounts:
+            - name: snapshot
+              mountPath: /snapshot
+      containers:
+        - name: replay
+          image: ghcr.io/kai-scheduler/kai-scheduler/snapshot-tool:v0.16.5
+          args:
+            - --filename
+            - /snapshot/snapshot.zip
+          volumeMounts:
+            - name: snapshot
+              mountPath: /snapshot

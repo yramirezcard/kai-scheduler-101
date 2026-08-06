@@ -19,7 +19,7 @@ This CPU-only lab can show the scheduling intent and reservation pattern. It can
 
 In this chapter, the 20%, 30%, and 50% workloads run in `namespace-a`, `namespace-b`, and `namespace-c`. They all use the `gpu-sharing-demo` queue, whose GPU quota and limit are both `1`. KAI can still run all three Pods because `0.2 + 0.3 + 0.5 = 1.0`.
 
-The key request is the `gpu-fraction` annotation on the Pod. The Pod still uses a DRA claim for a GPU device, but the annotation tells KAI how much of the selected GPU to account for this workload.
+The key request is the `gpu-fraction` annotation on the Pod. Do not add a full GPU request or a DRA claim to this example: that would make KAI account the full GPU plus the fraction. The annotation is the scheduling request for this fractional GPU-sharing path.
 
 ```yaml
 metadata:
@@ -29,12 +29,9 @@ metadata:
     gpu-fraction: "0.2"
 spec:
   schedulerName: kai-scheduler
-  resourceClaims:
-    - name: gpu
-      resourceClaimTemplateName: gpu-one
 ```
 
-Display the setup manifest. It creates the three namespaces, the `gpu-sharing-demo` queue with `quota: 1` and `limit: 1`, and one `ResourceClaimTemplate` in each namespace.
+Display the setup manifest. It creates the three namespaces and the `gpu-sharing-demo` queue with `quota: 1` and `limit: 1`.
 
 ```bash
 cat manifests/19-gpu-sharing/00-setup.yaml
@@ -112,12 +109,6 @@ Show all three chapter workloads in one view. They should all be `Running` once 
 kubectl get pods -A -l kai-scheduler-101/chapter=19 -o wide
 ```
 
-List the DRA claims created for the three workload Pods.
-
-```bash
-kubectl get resourceclaims -A
-```
-
 Describe one sharing Pod and inspect the `gpu-fraction` annotation.
 
 ```bash
@@ -130,7 +121,7 @@ Look for reservation Pods. In the ideal shared-placement case for this example, 
 kubectl get pods -n kai-resource-reservation
 ```
 
-Inspect KAI scheduler logs to understand the placement decisions. Useful keywords to look for in the output are `gpu-fraction`, `reservation`, `ResourceReservation`, `ResourceClaim`, `gpu-sharing-demo`, and the Pod names `gpu-share-20`, `gpu-share-30`, and `gpu-share-50`.
+Inspect KAI scheduler logs to understand the placement decisions. Useful keywords to look for in the output are `gpu-fraction`, `reservation`, `ResourceReservation`, `gpu-sharing-demo`, and the Pod names `gpu-share-20`, `gpu-share-30`, and `gpu-share-50`.
 
 ```bash
 kubectl logs -n kai-scheduler deploy/kai-scheduler-default --tail=200
@@ -164,7 +155,7 @@ kubectl delete queue gpu-sharing-demo --ignore-not-found
 
 ## What Just Happened
 
-You expressed fractional GPU intent while still using DRA claims. KAI accounted three Pods as fractions of one GPU, created or used a reservation object for the shared device, and allowed the Pods to run under a queue capped at one GPU. That scheduling accounting should not be confused with runtime memory isolation.
+You expressed fractional GPU intent with Pod annotations. KAI accounted three Pods as fractions of one GPU, created or used a reservation object for the shared device, and allowed the Pods to run under a queue capped at one GPU. That scheduling accounting should not be confused with runtime memory isolation.
 
 ## Sources
 

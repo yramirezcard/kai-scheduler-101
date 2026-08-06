@@ -1,7 +1,7 @@
 // Custom Next.js server that also bridges a browser terminal to a real shell (node-pty) over
 // WebSocket. Runs as ONE process on the Brev node, next to the live kind cluster. The shell
 // starts with KUBECONFIG pre-pointed at the cluster, so learners run `kubectl ...` for real.
-import { createServer } from "node:http";
+import { createServer, request } from "node:http";
 import { parse } from "node:url";
 import next from "next";
 import { WebSocketServer } from "ws";
@@ -16,13 +16,51 @@ const LAB_CWD = process.env.LAB_CWD || `${process.env.HOME}/kai-scheduler-101-la
 const LAB_KUBECONFIG = process.env.LAB_KUBECONFIG || `${LAB_CWD}/kubeconfig`;
 const LAB_RC = process.env.LAB_RC || `${process.cwd()}/lab/labrc`;
 const MAX_SESSIONS = parseInt(process.env.LAB_MAX_SESSIONS || "25", 10);
+const PROMETHEUS_PORT = parseInt(process.env.PROMETHEUS_PORT || "9090", 10);
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 let sessions = 0;
 await app.prepare();
 
+function proxyPrometheus(req, res) {
+  const originalUrl = req.url || "/prometheus/";
+  const targetPath = originalUrl.replace(/^\/prometheus(?=\/|$)/, "") || "/";
+  const headers = { ...req.headers, host: `127.0.0.1:${PROMETHEUS_PORT}` };
+
+  const proxyReq = request(
+    {
+      hostname: "127.0.0.1",
+      port: PROMETHEUS_PORT,
+      method: req.method,
+      path: targetPath,
+      headers,
+    },
+    (proxyRes) => {
+      const responseHeaders = { ...proxyRes.headers };
+      const location = responseHeaders.location;
+      if (typeof location === "string" && location.startsWith("/")) {
+        responseHeaders.location = `/prometheus${location}`;
+      }
+      res.writeHead(proxyRes.statusCode || 502, responseHeaders);
+      proxyRes.pipe(res);
+    },
+  );
+
+  proxyReq.on("error", () => {
+    res.writeHead(502, { "content-type": "text/plain" });
+    res.end(`Prometheus is not reachable on 127.0.0.1:${PROMETHEUS_PORT}. Start the kubectl port-forward command and keep it running.\n`);
+  });
+
+  req.pipe(proxyReq);
+}
+
 const server = createServer((req, res) => {
+  const { pathname } = parse(req.url || "");
+  if (pathname === "/prometheus" || pathname?.startsWith("/prometheus/")) {
+    proxyPrometheus(req, res);
+    return;
+  }
   handle(req, res, parse(req.url, true));
 });
 

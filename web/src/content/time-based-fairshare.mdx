@@ -14,7 +14,12 @@ The animation below uses only two queues. Vision runs first and accumulates GPU-
 
 <TimeFairshareAnimation />
 
-Time-based fairshare is not enabled with a `spec.args.timeBasedFairShare.enabled` flag. KAI uses historical usage only when the scheduler can read usage data, so the documented setup has two parts: enable Prometheus collection in the KAI `Config`, then configure the `SchedulingShard` with `usageDBConfig`. The optional `kValue` controls how strongly historical usage affects over-quota fair-share calculations, and `halfLifePeriod` controls time decay. If `halfLifePeriod` is omitted, time decay is off by default.
+KAI uses historical usage only when the scheduler can read usage data, so the setup has two parts: enable Prometheus collection in the KAI `Config`, then configure the `SchedulingShard` with `usageDBConfig`. The optional `kValue` controls how strongly historical usage affects over-quota fair-share calculations, and `halfLifePeriod` controls time decay. If `halfLifePeriod` is omitted, time decay is off by default.
+
+<Callout type="note" title="SchedulingShard">
+  Scheduling shards partition a cluster into independent scheduling domains. The concept will be further demonstrated in Part VII.
+  This lab only shows how to configure the feature, it does not demonstrated it as no real GPU usage is traced in this environment due to the simulated GPUs.
+</Callout>
 
 First, display the example `SchedulingShard` configuration. The important fields are `spec.usageDBConfig.clientType: prometheus`, `spec.usageDBConfig.usageParams`, and `spec.kValue`.
 

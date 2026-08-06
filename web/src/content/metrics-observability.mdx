@@ -22,7 +22,7 @@ List ServiceMonitor objects that mention KAI.
 kubectl get servicemonitor -A | grep kai || true
 ```
 
-List monitoring services. In Brev, expose applications with configured tunnel ports rather than appending raw ports to tunnel URLs.
+List monitoring services. In Brev, expose applications with configured tunnel ports rather than appending raw ports to tunnel URLs. The workshop server proxies `/prometheus/` to the local Prometheus port, so the button below uses the same workshop tunnel you already have open.
 
 ```bash
 kubectl get svc -n monitoring
@@ -34,9 +34,9 @@ Forward the Prometheus service to local port `9090`. Keep this command running w
 kubectl -n monitoring port-forward svc/kube-prometheus-stack-prometheus 9090:9090
 ```
 
-Open Prometheus and use the expression box to run the sample PromQL queries below.
+Open Prometheus through the workshop server and use the expression box to run the sample PromQL queries below.
 
-<AppLaunchButton label="Open Prometheus UI" path="/" port={9090} />
+<AppLaunchButton label="Open Prometheus UI" path="/prometheus/" />
 
 Start with a discovery query. This returns KAI metric series if Prometheus is scraping the KAI services.
 

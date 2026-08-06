@@ -11,7 +11,7 @@ metadata:
   name: l40s-inference
   labels:
     kai-scheduler-101/chapter: "17"
-    nvidia.com/gpu.machine: NVIDIA-L40S
+    kai.scheduler/node-pool: l40s
 spec:
   resources:
     cpu: { quota: 8, limit: 16, overQuotaWeight: 1 }
@@ -23,7 +23,7 @@ metadata:
   namespace: kai-lab17-l40s
   labels:
     kai-scheduler-101/chapter: "17"
-    nvidia.com/gpu.machine: NVIDIA-L40S
+    kai.scheduler/node-pool: l40s
 spec:
   parallelism: 2
   completions: 2
@@ -31,7 +31,7 @@ spec:
     metadata:
       labels:
         kai.scheduler/queue: l40s-inference
-        nvidia.com/gpu.machine: NVIDIA-L40S
+        kai.scheduler/node-pool: l40s
         kai-scheduler-101/chapter: "17"
     spec:
       schedulerName: kai-scheduler

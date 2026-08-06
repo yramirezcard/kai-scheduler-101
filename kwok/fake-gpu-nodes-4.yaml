@@ -9,6 +9,7 @@ metadata:
     run.ai/simulated-gpu-node-pool: default
     nvidia.com/gpu.family: hopper
     nvidia.com/gpu.machine: NVIDIA-DGX-H100
+    kai.scheduler/node-pool: h100
     kai.scheduler/topology-block: block-a
     kai.scheduler/topology-rack: rack-a1
     kubernetes.io/hostname: kwok-gpu-01
@@ -37,6 +38,7 @@ metadata:
     run.ai/simulated-gpu-node-pool: default
     nvidia.com/gpu.family: hopper
     nvidia.com/gpu.machine: NVIDIA-DGX-H100
+    kai.scheduler/node-pool: h100
     kai.scheduler/topology-block: block-a
     kai.scheduler/topology-rack: rack-a1
     kubernetes.io/hostname: kwok-gpu-02
@@ -59,6 +61,7 @@ metadata:
     run.ai/simulated-gpu-node-pool: default
     nvidia.com/gpu.family: ada
     nvidia.com/gpu.machine: NVIDIA-L40S
+    kai.scheduler/node-pool: l40s
     kai.scheduler/topology-block: block-a
     kai.scheduler/topology-rack: rack-a2
     kubernetes.io/hostname: kwok-gpu-03
@@ -81,6 +84,7 @@ metadata:
     run.ai/simulated-gpu-node-pool: default
     nvidia.com/gpu.family: ada
     nvidia.com/gpu.machine: NVIDIA-L40S
+    kai.scheduler/node-pool: l40s
     kai.scheduler/topology-block: block-a
     kai.scheduler/topology-rack: rack-a2
     kubernetes.io/hostname: kwok-gpu-04

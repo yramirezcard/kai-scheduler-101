@@ -1,7 +1,7 @@
 apiVersion: grove.io/v1alpha1
 kind: ClusterTopologyBinding
 metadata:
-  name: grove-lab-topology
+  name: lab-topology
   labels:
     kai-scheduler-101/chapter: "18"
 spec:
@@ -30,7 +30,7 @@ spec:
     priorityClassName: inference
     cliqueStartupType: CliqueStartupTypeInOrder
     topologyConstraint:
-      topologyName: grove-lab-topology
+      topologyName: lab-topology
       pack:
         required: block
     cliques:

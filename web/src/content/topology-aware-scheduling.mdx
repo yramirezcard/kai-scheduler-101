@@ -27,6 +27,8 @@ The first sample workload requires block-level placement and prefers rack-level 
 
 KAI also supports Multi-Level Topology Aware Scheduling for hierarchical PodGroups. Instead of giving one topology rule to the whole workload, each SubGroup can carry its own `topologyConstraint`. This is a natural fit for Grove, which you introduced earlier: the root `PodCliqueSet` can require one block, prefill and decode `PodCliqueScalingGroup`s can each require a rack, and tightly coupled cliques can request host-level packing. The second hands-on manifest uses Grove CRDs to describe 20 one-GPU Pods so the multi-level constraints are visible on the 24-node topology.
 
+Grove validates topology constraints at admission time. The lab bootstrap installs Grove with `config.topologyAwareScheduling.enabled=true`; without that flag, Grove rejects any `PodCliqueSet` containing `topologyConstraint` fields before KAI gets a chance to schedule it. If you are reusing an older Brev VM, rerun the setup or upgrade Grove with topology-aware scheduling enabled before applying the multi-level serving manifest.
+
 <TopologyMap />
 
 Display the 24-node KWOK expansion. It models 2 blocks, 3 racks per block, and 4 hosts per rack.
@@ -95,7 +97,7 @@ Delete the rack-local training job before the multi-level serving example. This 
 kubectl delete job -n kai-lab18 rack-local-training --ignore-not-found
 ```
 
-Display the multi-level serving workload. This example uses Grove CRDs directly: `ClusterTopologyBinding` maps Grove domains to node labels, and `PodCliqueSet` describes the router, prefill, and decode serving roles with multi-level topology constraints.
+Display the multi-level serving workload. This example uses Grove CRDs directly: `ClusterTopologyBinding` maps Grove domains to node labels, and `PodCliqueSet` describes the router, prefill, and decode serving roles with multi-level topology constraints. The binding is named `lab-topology`, matching the KAI `Topology` object, so the scheduler-facing topology request resolves to an existing topology.
 
 ```bash
 cat manifests/18-topology/multilevel-serving-workload.yaml
@@ -110,7 +112,7 @@ kubectl apply -f manifests/18-topology/multilevel-serving-workload.yaml
 Inspect Grove's topology binding. It maps the Grove domains `block`, `rack`, and `host` to the same node labels used by KAI's `Topology` object.
 
 ```bash
-kubectl get clustertopologybinding grove-lab-topology -o yaml
+kubectl get clustertopologybinding lab-topology -o yaml
 ```
 
 Inspect the Grove `PodCliqueSet`. Look for the root block-level packing constraint and the role-specific clique constraints.

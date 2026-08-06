@@ -5,7 +5,6 @@ metadata:
   labels:
     kai-scheduler-101/chapter: "17"
 spec:
-  partitionLabelKey: nvidia.com/gpu.machine
-  partitionLabelValue: NVIDIA-DGX-H100
+  partitionLabelValue: h100
   args:
     actions: [allocate, consolidate, reclaim, preempt, stalegangeviction]

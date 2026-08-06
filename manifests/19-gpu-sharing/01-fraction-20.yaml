@@ -12,10 +12,8 @@ spec:
   schedulerName: kai-scheduler
   restartPolicy: Never
   tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
-  resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
   containers:
     - name: workload
       image: ubuntu:22.04
       command: ["bash", "-lc"]
       args: ["echo 20 percent gpu workload; sleep 3600"]
-      resources: { claims: [ { name: gpu } ] }

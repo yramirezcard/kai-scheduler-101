@@ -2,27 +2,29 @@
 
 Scheduling shards partition a cluster into independent scheduling domains. Each shard can have its own scheduler deployment, node set, queue set, PodGroups, and scheduler arguments.
 
+KAI's `SchedulingShard` API selects a shard partition with `spec.partitionLabelValue`. The label key is not set on each shard. It comes from KAI's global scheduler configuration as `nodePoolLabelKey`, which defaults to `kai.scheduler/node-pool`. For that reason, this lab labels the H100-like nodes with `kai.scheduler/node-pool=h100` and the L40S-like nodes with `kai.scheduler/node-pool=l40s`.
+
 <ShardAnimation />
 
-Start by inspecting the four KWOK nodes created during setup. The lab already labels two nodes as H100 and two nodes as L40S, so this chapter reuses the existing simulated cluster instead of creating new nodes.
+Start by inspecting the four KWOK nodes created during setup. The lab already labels two nodes as H100 and two nodes as L40S, and also assigns matching KAI node-pool labels, so this chapter reuses the existing simulated cluster instead of creating new nodes.
 
 ```bash
-kubectl get nodes -L nvidia.com/gpu.machine
+kubectl get nodes -L nvidia.com/gpu.machine,kai.scheduler/node-pool
 ```
 
-List nodes that match the simulated H100 label.
+List nodes that match the H100 shard partition label.
 
 ```bash
-kubectl get nodes -l nvidia.com/gpu.machine=NVIDIA-DGX-H100
+kubectl get nodes -l kai.scheduler/node-pool=h100
 ```
 
-List nodes that match the simulated L40S label.
+List nodes that match the L40S shard partition label.
 
 ```bash
-kubectl get nodes -l nvidia.com/gpu.machine=NVIDIA-L40S
+kubectl get nodes -l kai.scheduler/node-pool=l40s
 ```
 
-Display the H100 shard manifest. This shard targets nodes, queues, and PodGroups labeled `nvidia.com/gpu.machine: NVIDIA-DGX-H100`. Creating it causes KAI to reconcile a scheduler deployment for the H100 partition.
+Display the H100 shard manifest. This shard uses `partitionLabelValue: h100`, so it targets nodes, queues, and PodGroups labeled `kai.scheduler/node-pool: h100`. Creating it causes KAI to reconcile a scheduler deployment for the H100 partition.
 
 ```bash
 cat manifests/17-shards/scheduling-shard-h100.yaml
@@ -34,7 +36,7 @@ Apply the H100 shard.
 kubectl apply -f manifests/17-shards/scheduling-shard-h100.yaml
 ```
 
-Display the L40S shard manifest. It targets a different node set and uses a smaller action set to show that shards can carry different scheduler arguments.
+Display the L40S shard manifest. It uses `partitionLabelValue: l40s`, targets a different node set, and uses a smaller action set to show that shards can carry different scheduler arguments.
 
 ```bash
 cat manifests/17-shards/scheduling-shard-l40s.yaml
@@ -64,7 +66,7 @@ Read the L40S shard resource.
 kubectl get schedulingshard l40s-shard -o yaml
 ```
 
-Display the H100 workload. Its queue and Job labels match the H100 shard partition.
+Display the H100 workload. Its queue and Job labels match the H100 shard partition with `kai.scheduler/node-pool: h100`.
 
 ```bash
 cat manifests/17-shards/h100-workload.yaml
@@ -88,7 +90,7 @@ Inspect the H100 shard scheduler logs after deploying the H100 workload. This lo
 kubectl logs -n kai-scheduler deployment/kai-scheduler-h100-shard --tail=120
 ```
 
-Display the L40S workload. Its queue and Job labels match the L40S shard partition.
+Display the L40S workload. Its queue and Job labels match the L40S shard partition with `kai.scheduler/node-pool: l40s`.
 
 ```bash
 cat manifests/17-shards/l40s-workload.yaml

@@ -14,7 +14,6 @@ metadata:
     kai.scheduler/queue: default-queue
     kai-scheduler-101/chapter: "22"
 spec:
-  schedulerName: kai-scheduler
   restartPolicy: Never
   containers:
     - name: debug

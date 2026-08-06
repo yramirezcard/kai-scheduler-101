@@ -4,7 +4,7 @@ Placement strategy changes how KAI chooses among feasible nodes. Spread distribu
 
 Consolidation uses the same intuition after work is already running. If workloads are scattered in a way that leaves the cluster fragmented, the scheduler can repack movable workloads to improve utilization, but only when the move can be completed safely. That is why Consolidate appears early in the scheduling cycle: it tries to improve placement before disruptive actions such as reclaim or preemption are needed.
 
-KAI configures placement at the `SchedulingShard` level. The official shard configuration supports a `placementStrategy` map per resource, for example `cpu: spread`, `gpu: spread`, `cpu: binpack`, or `gpu: binpack`. This lab uses one-GPU DRA claims so the placement effect is tied to GPU fragmentation, which is the resource you usually care about in KAI.
+KAI configures placement at the `SchedulingShard` level. The official shard configuration supports a `placementStrategy` map per resource, for example `cpu: spread`, `gpu: spread`, `cpu: binpack`, or `gpu: binpack`. Shard membership is selected with `spec.partitionLabelValue`; the label key is configured globally as `nodePoolLabelKey` and defaults to `kai.scheduler/node-pool`. This lab uses one-GPU DRA claims so the placement effect is tied to GPU fragmentation, which is the resource you usually care about in KAI.
 
 <PlacementAnimation />
 
@@ -20,7 +20,7 @@ Apply the node labels.
 kubectl apply -f manifests/16-placement/node-labels.yaml
 ```
 
-Display the spread shard example. The important field is `spec.placementStrategy.gpu: spread`.
+Display the spread shard example. The important fields are `spec.partitionLabelValue: placement-spread` and `spec.placementStrategy.gpu: spread`. Do not add `spec.partitionLabelKey`; that field is not part of the current `SchedulingShard` API.
 
 ```bash
 cat manifests/16-placement/scheduling-shard-spread.yaml
@@ -32,7 +32,7 @@ Apply the spread example.
 kubectl apply -f manifests/16-placement/scheduling-shard-spread.yaml
 ```
 
-Display the bin-pack shard example. The important field is `spec.placementStrategy.gpu: binpack`.
+Display the bin-pack shard example. The important fields are `spec.partitionLabelValue: placement-binpack` and `spec.placementStrategy.gpu: binpack`.
 
 ```bash
 cat manifests/16-placement/scheduling-shard-binpack.yaml

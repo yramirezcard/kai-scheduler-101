@@ -11,7 +11,8 @@
 
     helm upgrade -i grove oci://ghcr.io/ai-dynamo/grove/grove-charts \
       -n "{{ grove_namespace }}" --create-namespace \
-      "${version_args[@]}"
+      "${version_args[@]}" \
+      --set 'config.topologyAwareScheduling.enabled=true'
 
     kubectl -n "{{ grove_namespace }}" rollout status deployment --timeout=180s || true
     kubectl get crd podcliquesets.grove.io podcliquescalinggroups.grove.io podcliques.grove.io podgangs.scheduler.grove.io

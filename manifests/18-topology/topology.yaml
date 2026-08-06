@@ -1,4 +1,4 @@
-apiVersion: kai.scheduler/v1
+apiVersion: kai.scheduler/v1alpha1
 kind: Topology
 metadata:
   name: lab-topology

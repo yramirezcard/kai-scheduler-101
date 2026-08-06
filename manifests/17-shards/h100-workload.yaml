@@ -11,7 +11,7 @@ metadata:
   name: h100-research
   labels:
     kai-scheduler-101/chapter: "17"
-    nvidia.com/gpu.machine: NVIDIA-DGX-H100
+    kai.scheduler/node-pool: h100
 spec:
   resources:
     cpu: { quota: 8, limit: 16, overQuotaWeight: 1 }
@@ -23,7 +23,7 @@ metadata:
   namespace: kai-lab17-h100
   labels:
     kai-scheduler-101/chapter: "17"
-    nvidia.com/gpu.machine: NVIDIA-DGX-H100
+    kai.scheduler/node-pool: h100
 spec:
   parallelism: 2
   completions: 2
@@ -31,7 +31,7 @@ spec:
     metadata:
       labels:
         kai.scheduler/queue: h100-research
-        nvidia.com/gpu.machine: NVIDIA-DGX-H100
+        kai.scheduler/node-pool: h100
         kai-scheduler-101/chapter: "17"
     spec:
       schedulerName: kai-scheduler

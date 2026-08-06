@@ -64,18 +64,6 @@ Inspect the Grove CRDs registered by the Helm chart. These are the APIs the oper
 kubectl get crd podcliquesets.grove.io podcliquescalinggroups.grove.io podcliques.grove.io podgangs.scheduler.grove.io
 ```
 
-Read the top-level `PodCliqueSet` CRD. This is the user-facing object that describes a complete inference system.
-
-```bash
-kubectl describe crd podcliquesets.grove.io
-```
-
-Read the scheduler-facing `PodGang` CRD. Grove creates `PodGang` objects so the scheduler can reason about gang scheduling for the generated Pods.
-
-```bash
-kubectl describe crd podgangs.scheduler.grove.io
-```
-
 Display the disaggregated serving manifest. This manifest creates a KAI queue and a Grove `PodCliqueSet` with five roles: router, prefill leader, prefill workers, decode leader, and decode workers. It sets two top-level `PodCliqueSet` replicas for availability, then groups prefill and decode with `PodCliqueScalingGroup` entries so each multi-role component scales and schedules together.
 
 ```bash

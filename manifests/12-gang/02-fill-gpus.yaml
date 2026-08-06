@@ -1,13 +1,15 @@
-apiVersion: batch/v1
-kind: Job
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: fill-eight-gpus
   namespace: kai-lab12
   labels:
     kai-scheduler-101/chapter: "12"
 spec:
-  parallelism: 8
-  completions: 8
+  replicas: 8
+  selector:
+    matchLabels:
+      app: fill-eight-gpus
   template:
     metadata:
       labels:
@@ -17,7 +19,6 @@ spec:
     spec:
       schedulerName: kai-scheduler
       priorityClassName: train
-      restartPolicy: Never
       tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
       resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
       containers:
@@ -29,16 +30,18 @@ spec:
 
 ---
 
-apiVersion: batch/v1
-kind: Job
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: fill-four-gpus
   namespace: kai-lab12
   labels:
     kai-scheduler-101/chapter: "12"
 spec:
-  parallelism: 4
-  completions: 4
+  replicas: 4
+  selector:
+    matchLabels:
+      app: fill-four-gpus
   template:
     metadata:
       labels:
@@ -48,7 +51,6 @@ spec:
     spec:
       schedulerName: kai-scheduler
       priorityClassName: train
-      restartPolicy: Never
       tolerations: [ { key: kwok.x-k8s.io/node, operator: Exists, effect: NoSchedule } ]
       resourceClaims: [ { name: gpu, resourceClaimTemplateName: gpu-one } ]
       containers:

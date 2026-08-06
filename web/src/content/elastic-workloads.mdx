@@ -14,16 +14,76 @@ For real elastic PyTorch jobs, KAI's documentation calls out an important prereq
 
 <ElasticAnimation />
 
-This manifest creates the isolated namespace, the queue, and the elastic PodGroup. Display it first so you can see the `minSubGroup: 3` rule and the four replica SubGroups before anything is applied.
+Display the setup manifest. It creates the namespace, a one-GPU `ResourceClaimTemplate`, and an `elastic-demo` queue with `quota: 8` and `limit: 8`. The fixed eight-GPU queue limit makes the elastic behavior easy to see.
 
 ```bash
-cat manifests/13-elastic/elastic-replicas-podgroup.yaml
+cat manifests/13-elastic/01-setup.yaml
 ```
 
-Apply the elastic PodGroup example. In a real controller-driven workflow, a training controller or serving controller would create this kind of scheduler-facing structure for KAI.
+Apply the setup.
 
 ```bash
-kubectl apply -f manifests/13-elastic/elastic-replicas-podgroup.yaml
+kubectl apply -f manifests/13-elastic/01-setup.yaml
+```
+
+Display the four-Pod filler Deployment. This workload occupies four simulated GPUs before the elastic workload is submitted.
+
+```bash
+cat manifests/13-elastic/02-fill-four-gpus.yaml
+```
+
+Create the four-Pod filler.
+
+```bash
+kubectl apply -f manifests/13-elastic/02-fill-four-gpus.yaml
+```
+
+Display the single-Pod filler. This Pod occupies one more simulated GPU, leaving only three GPUs available inside the queue limit.
+
+```bash
+cat manifests/13-elastic/03-fill-one-gpu.yaml
+```
+
+Create the single-Pod filler.
+
+```bash
+kubectl apply -f manifests/13-elastic/03-fill-one-gpu.yaml
+```
+
+Show the filler workload Pods. At this point, five one-GPU Pods should be allocated in the `elastic-demo` queue.
+
+```bash
+kubectl get pods -n kai-lab13 -o wide
+```
+
+Describe the queue and look at allocated GPU capacity. The expected state is five GPUs allocated before the elastic workload is created.
+
+```bash
+kubectl describe queue elastic-demo
+```
+
+Display the elastic workload manifest. It creates a PodGroup with four replica SubGroups, but `minSubGroup: 3` means KAI can start the workload when any three replica SubGroups fit. The Pods use `pod-group-name: elastic-four-replicas` to join the PodGroup, and `kai.scheduler/subgroup-name` to identify their replica SubGroup.
+
+```bash
+cat manifests/13-elastic/04-elastic-four-replicas.yaml
+```
+
+Create the elastic workload. Only three GPUs are free inside the queue limit, so the first scheduling decision should admit three elastic replicas and leave the fourth pending.
+
+```bash
+kubectl apply -f manifests/13-elastic/04-elastic-four-replicas.yaml
+```
+
+Show the workload Pods. You should see the four-Pod filler, the single-Pod filler, and three scheduled elastic replicas. That is eight allocated GPUs total, with three coming from the elastic workload.
+
+```bash
+kubectl get pods -n kai-lab13 -o wide
+```
+
+Describe the queue again. The expected allocated capacity is eight GPUs.
+
+```bash
+kubectl describe queue elastic-demo
 ```
 
 Read the PodGroup back from the Kubernetes API. Focus on the root `minSubGroup` and the four child SubGroups.
@@ -38,29 +98,71 @@ List the PodGroups in the namespace. This is a quick way to confirm the schedule
 kubectl get podgroups -n kai-lab13
 ```
 
-Read namespace events if the object is rejected or remains unschedulable. Admission or scheduling messages are usually clearer in events than in the object list.
+Delete the single-Pod filler to free one GPU.
+
+```bash
+kubectl delete -f manifests/13-elastic/03-fill-one-gpu.yaml --ignore-not-found
+```
+
+Show the workload Pods again. The fourth elastic replica should be able to schedule after the single filler releases its GPU. The queue should still have eight GPUs allocated, but now four of them come from the elastic workload.
+
+```bash
+kubectl get pods -n kai-lab13 -o wide
+```
+
+Describe the queue one more time and confirm allocation is still eight GPUs.
+
+```bash
+kubectl describe queue elastic-demo
+```
+
+Read namespace events if any elastic replica remains unschedulable. Admission or scheduling messages are usually clearer in events than in the object list.
 
 ```bash
 kubectl get events -n kai-lab13 --sort-by=.lastTimestamp
 ```
 
+Inspect scheduler logs and look for `elastic-four-replicas`, `minSubGroup`, `replica-4`, `elastic-fill-one`, and `elastic-demo` to correlate the initial 3-of-4 admission with the later fourth replica placement.
+
+```bash
+kubectl logs -n kai-scheduler deploy/kai-scheduler-default --tail=200
+```
+
 ## Clean Up
 
-Delete the elastic namespace. This clears the PodGroup object used in the scenario.
+Delete the elastic workload first.
+
+```bash
+kubectl delete -f manifests/13-elastic/04-elastic-four-replicas.yaml --ignore-not-found
+```
+
+Delete the single-Pod filler in case it still exists.
+
+```bash
+kubectl delete -f manifests/13-elastic/03-fill-one-gpu.yaml --ignore-not-found
+```
+
+Delete the four-Pod filler.
+
+```bash
+kubectl delete -f manifests/13-elastic/02-fill-four-gpus.yaml --ignore-not-found
+```
+
+Delete the elastic setup. This removes the namespace, ResourceClaimTemplate, and queue used in the scenario.
+
+```bash
+kubectl delete -f manifests/13-elastic/01-setup.yaml --ignore-not-found
+```
+
+If the namespace is still terminating, explicitly ask Kubernetes to remove it.
 
 ```bash
 kubectl delete namespace kai-lab13 --ignore-not-found
 ```
 
-Delete the cluster-scoped elastic queue.
-
-```bash
-kubectl delete queue elastic-demo --ignore-not-found
-```
-
 ## What Just Happened
 
-You separated "minimum useful work" from "maximum desired work." The first three replica SubGroups are enough to make progress, while the fourth is elastic capacity. That is the pattern behind elastic training and elastic serving: start once the required threshold is met, then use spare GPUs if they appear.
+You separated "minimum useful work" from "maximum desired work." The filler workloads left only three GPUs available, so KAI could admit the elastic PodGroup at its useful minimum of three replica SubGroups. After the single filler Pod was removed, one more GPU became available and the fourth replica joined. That is the pattern behind elastic training and elastic serving: start once the required threshold is met, then use spare GPUs if they appear.
 
 ## Sources
 
