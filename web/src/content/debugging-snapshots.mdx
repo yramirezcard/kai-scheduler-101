@@ -8,7 +8,7 @@ KAI debugging has a natural escalation path:
 
 The KAI scheduler includes a snapshot plugin that registers an HTTP handler at `/get-snapshot`. The response is a `snapshot.zip` file containing `snapshot.json`. That JSON includes the scheduler configuration, scheduler parameters, API discovery data, and raw Kubernetes objects such as Pods, Nodes, Queues, PodGroups, BindRequests, ResourceClaims, ResourceSlices, DeviceClasses, and Topologies.
 
-The old debug pod only slept, so it did not capture anything. In this version, you first create a tiny scheduling scenario, then ask the scheduler endpoint for a real snapshot.
+In this version, you first create a tiny scheduling scenario, then ask the scheduler endpoint for a real snapshot.
 
 Display the scenario manifest. It creates a namespace, a queue, a one-GPU claim template, and a two-replica KAI-scheduled workload so the snapshot has meaningful objects to collect.
 
@@ -34,31 +34,11 @@ Inspect the PodGroups that KAI created for the workload.
 kubectl get podgroups -n kai-lab22
 ```
 
-Display the non-blocking debug Pod manifest. This pod is only a curl client that stays alive long enough for you to copy the captured snapshot out of the cluster.
-
-```bash
-cat manifests/22-snapshots/snapshot-debug-pod.yaml
-```
-
-Apply the debug Pod.
-
-```bash
-kubectl apply -f manifests/22-snapshots/snapshot-debug-pod.yaml
-```
-
-Wait for the debug Pod to be ready.
-
-```bash
-kubectl wait -n kai-lab22 --for=condition=Ready pod/snapshot-debug --timeout=120s
-```
-
-List KAI services. The default scheduler service is normally `kai-scheduler-default` on port `8080`.
+List KAI services and Pods. The scheduler has a public service port, but the snapshot handler is bound to localhost inside the scheduler process on port `8081`.
 
 ```bash
 kubectl get svc -n kai-scheduler
 ```
-
-List KAI Pods so you know which component owns the snapshot endpoint.
 
 ```bash
 kubectl get pods -n kai-scheduler
@@ -67,19 +47,30 @@ kubectl get pods -n kai-scheduler
 Check the scheduler log for the snapshot plugin registration message. If this message is missing, the endpoint will not be available on that scheduler shard.
 
 ```bash
-kubectl logs -n kai-scheduler deploy/kai-scheduler-default --tail=120
+kubectl logs -n kai-scheduler deploy/kai-scheduler-default | grep "Snapshot plugin registering"
 ```
 
-Capture the scheduler snapshot from inside the cluster. This calls the scheduler service directly and writes `/tmp/snapshot.zip` inside the debug Pod.
+<Callout type="note" title="Use a second shell">
+Open a second shell before starting the port-forward. In the browser-based lab, duplicate the browser tab, open a new shell in that tab, and keep the original shell available for the curl commands below.
+</Callout>
+
+In the second shell, forward the scheduler's localhost-only snapshot endpoint to the lab VM. Leave this command running.
 
 ```bash
-kubectl exec -n kai-lab22 snapshot-debug -- curl -fsS http://kai-scheduler-default.kai-scheduler.svc.cluster.local:8080/get-snapshot -o /tmp/snapshot.zip
+kubectl port-forward -n kai-scheduler deploy/kai-scheduler-default 8081:8081
 ```
 
-Copy the snapshot zip from the debug Pod to the lab VM.
+Return to the original shell and capture the scheduler snapshot through the local port-forward.
 
 ```bash
-kubectl cp kai-lab22/snapshot-debug:/tmp/snapshot.zip /tmp/kai-snapshot.zip
+curl -fsS http://127.0.0.1:8081/get-snapshot -o /tmp/kai-snapshot.zip
+```
+
+If this returns `404`, recheck that the port-forward is using `8081:8081`, not the scheduler service port. Also make sure you are forwarding the shard that owns the workload.
+
+```bash
+kubectl get schedulingshard
+kubectl get deployments -n kai-scheduler
 ```
 
 List the zip contents. You should see `snapshot.json`.
@@ -93,30 +84,22 @@ Print object counts from the snapshot. This is the first concrete proof that the
 ```bash
 python3 -c 'import json, zipfile; data=json.loads(zipfile.ZipFile("/tmp/kai-snapshot.zip").read("snapshot.json")); raw=data["rawObjects"]; keys=["pods","nodes","queues","podGroups","bindRequests","resourceClaims","resourceSlices","deviceClasses","topologies"]; print({k: len(raw.get(k) or []) for k in keys})'
 ```
+Expected shape:
 
-Display the replay Job manifest. The init container captures a fresh snapshot from `/get-snapshot`; the main container runs the official `snapshot-tool` image against that file.
-
-```bash
-cat manifests/22-snapshots/snapshot-replay-job.yaml
+```yaml
+{'pods': 26, 'nodes': 5, 'queues': 3, 'podGroups': 3, 'bindRequests': 2, 'resourceClaims': 3, 'resourceSlices': 4, 'deviceClasses': 1, 'topologies': 0}
 ```
 
-Run the replay Job.
+Run the official `snapshot-tool` image against the captured file. This replays the scheduler cycle offline and prints action durations, which proves the snapshot is usable rather than just downloaded.
 
 ```bash
-kubectl apply -f manifests/22-snapshots/snapshot-replay-job.yaml
+docker run --rm \
+  -v /tmp/kai-snapshot.zip:/snapshot.zip:ro \
+  ghcr.io/kai-scheduler/kai-scheduler/snapshot-tool:v0.16.5 \
+  --filename /snapshot.zip
 ```
 
-Wait for the replay Job to complete.
-
-```bash
-kubectl wait -n kai-lab22 --for=condition=complete job/kai-snapshot-replay --timeout=120s
-```
-
-Read the replay output. The tool replays the scheduler cycle offline and prints action durations, which proves the snapshot is usable rather than just downloaded.
-
-```bash
-kubectl logs -n kai-lab22 job/kai-snapshot-replay
-```
+If Docker is not available on the lab VM, skip the replay step and keep `/tmp/kai-snapshot.zip` as the portable debug artifact.
 
 Read recent events across the cluster as a final comparison point.
 
@@ -125,18 +108,6 @@ kubectl get events -A --sort-by=.lastTimestamp
 ```
 
 ## Clean Up
-
-Delete the snapshot replay Job.
-
-```bash
-kubectl delete -f manifests/22-snapshots/snapshot-replay-job.yaml --ignore-not-found
-```
-
-Delete the debug Pod.
-
-```bash
-kubectl delete -f manifests/22-snapshots/snapshot-debug-pod.yaml --ignore-not-found
-```
 
 Delete the scenario resources.
 

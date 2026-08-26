@@ -23,6 +23,7 @@ Hands-on KAI Scheduler lab for a CPU-only Brev VM. The bootstrap creates a singl
 | Kubernetes | k3s |
 | Simulated GPU layer | KWOK plus fake-gpu-operator |
 | Workshop port | 3000 |
+| Prometheus port | 3001 through Envoy Gateway at `/prometheus/` |
 
 ## Launchable Setup Script
 
@@ -45,6 +46,12 @@ Optional Launchable variables:
 | `KWOK_VERSION` | `v0.7.0` |
 | `KUBE_PROMETHEUS_STACK_VERSION` | unset, uses chart repository default |
 | `MONITORING_NAMESPACE` | `monitoring` |
+| `ENVOY_GATEWAY_ENABLED` | `true` |
+| `ENVOY_GATEWAY_VERSION` | `1.4.6` |
+| `ENVOY_GATEWAY_NAMESPACE` | `kai-gateway` |
+| `ENVOY_HOST_PORT` | `3001` |
+| `ENVOY_WEB_NODEPORT` | `30080` |
+| `PROMETHEUS_ROUTE_PATH` | `/prometheus` |
 
 `FAKE_GPU_OPERATOR_VERSION` pins the OCI Helm chart from `oci://ghcr.io/run-ai/fake-gpu-operator/fake-gpu-operator`. The GitHub release tag is `v0.2.0`, while Helm expects chart version `0.2.0`; the setup role accepts either form and strips a leading `v` before calling Helm.
 

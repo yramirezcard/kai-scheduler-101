@@ -14,6 +14,8 @@
 
     helm upgrade -i kube-prometheus-stack prometheus-community/kube-prometheus-stack \
       -n "{{ monitoring_namespace }}" --create-namespace \
+      --set-string prometheus.prometheusSpec.routePrefix="{{ prometheus_route_path }}" \
+      --set-string prometheus.prometheusSpec.externalUrl="{{ prometheus_route_path }}" \
       "${version_args[@]}"
 
     kubectl -n "{{ monitoring_namespace }}" rollout status deployment/kube-prometheus-stack-operator --timeout=240s || true

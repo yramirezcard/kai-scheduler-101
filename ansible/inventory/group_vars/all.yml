@@ -9,3 +9,11 @@ grove_namespace: "{{ lookup('env', 'GROVE_NAMESPACE') | default('grove-system', 
 kwok_version: "{{ lookup('env', 'KWOK_VERSION') | default('v0.7.0', true) }}"
 monitoring_namespace: "{{ lookup('env', 'MONITORING_NAMESPACE') | default('monitoring', true) }}"
 kube_prometheus_stack_version: "{{ lookup('env', 'KUBE_PROMETHEUS_STACK_VERSION') | default('', true) }}"
+envoy_gateway_enabled: "{{ lookup('env', 'ENVOY_GATEWAY_ENABLED') | default('true', true) }}"
+envoy_gateway_version: "{{ lookup('env', 'ENVOY_GATEWAY_VERSION') | default('1.4.6', true) }}"
+envoy_gateway_ns: "{{ lookup('env', 'ENVOY_GATEWAY_NAMESPACE') | default('kai-gateway', true) }}"
+envoy_host_port: "{{ lookup('env', 'ENVOY_HOST_PORT') | default('3001', true) }}"
+envoy_web_nodeport: "{{ lookup('env', 'ENVOY_WEB_NODEPORT') | default('30080', true) }}"
+prometheus_route_path: "{{ lookup('env', 'PROMETHEUS_ROUTE_PATH') | default('/prometheus', true) }}"
+prometheus_service_name: kube-prometheus-stack-prometheus
+prometheus_service_port: 9090

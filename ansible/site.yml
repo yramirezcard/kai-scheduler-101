@@ -12,3 +12,4 @@
     - { role: "04-fake-gpu-operator", tags: [fake-gpu-operator] }
     - { role: "05-grove", tags: [grove] }
     - { role: "06-observability", tags: [observability, prometheus, grafana] }
+    - { role: "07-prometheus-gateway", when: envoy_gateway_enabled | bool, tags: [envoy, gateway, prometheus] }

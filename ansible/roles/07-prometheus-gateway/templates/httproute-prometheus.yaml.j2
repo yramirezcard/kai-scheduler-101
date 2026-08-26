@@ -1,0 +1,18 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: prometheus-ui
+  namespace: {{ monitoring_namespace }}
+spec:
+  parentRefs:
+    - name: kai-gw
+      namespace: {{ envoy_gateway_ns }}
+      sectionName: web
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: "{{ prometheus_route_path }}"
+      backendRefs:
+        - name: {{ prometheus_service_name }}
+          port: {{ prometheus_service_port }}

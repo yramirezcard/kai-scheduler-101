@@ -8,6 +8,7 @@ function buildAppUrl(path: string, port: number) {
 
   const url = new URL(window.location.href);
   const tunnelMatch = url.hostname.match(/^tunnel-(\d+)-(.+)$/);
+  const brevLabMatch = url.hostname.match(/^(.+)\.brevlab\.com$/);
 
   if (tunnelMatch) {
     const currentTunnel = Number(tunnelMatch[1]);
@@ -15,6 +16,18 @@ function buildAppUrl(path: string, port: number) {
     const currentPort = url.port ? Number(url.port) : 3000;
     const targetTunnel = currentTunnel + (port - currentPort);
     if (targetTunnel > 0) url.hostname = `tunnel-${targetTunnel}-${suffix}`;
+    url.port = "";
+  } else if (brevLabMatch) {
+    const subdomain = brevLabMatch[1];
+    const prefixMatch = subdomain.match(/^(?:\d+|ui|kai-lab|kai-scheduler-101-lab)-(.+)$/);
+    const suffix = prefixMatch ? prefixMatch[1] : subdomain;
+
+    if (port === 3000) {
+      url.hostname = suffix.endsWith(".brevlab.com") ? suffix : `${suffix}.brevlab.com`;
+    } else {
+      const tunnelPrefix = port === 3001 ? "ui" : String(port);
+      url.hostname = `${tunnelPrefix}-${suffix}.brevlab.com`;
+    }
     url.port = "";
   } else {
     url.port = String(port);
