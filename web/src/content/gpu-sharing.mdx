@@ -47,6 +47,10 @@ Check whether DRA `ResourceSlice` objects are still visible. If this command sti
 kubectl get resourceslice -A
 ```
 
+```
+kubectl delete resourceslice --all
+```
+
 Restart KAI so the scheduler and binder refresh their view of the simulated GPU inventory.
 
 ```bash
