@@ -36,8 +36,8 @@ export const CURRICULUM: Part[] = [
     { slug: "binpack-spread", title: "Bin-Packing vs Spread & Consolidation", blurb: "Apply placement shards and compare node placement.", minutes: 2, hasLab: true },
     { slug: "topology-aware-scheduling", title: "Topology-Aware Scheduling", blurb: "Expand to 24 simulated nodes and enforce rack locality.", minutes: 4, hasLab: true },
   ]},
-  { id: "gpu", title: "Part VIII - GPU Sharing", subtitle: "Fractional GPU allocation and memory isolation", lessons: [
-    { slug: "gpu-sharing", title: "GPU Sharing: Fractions & Memory", blurb: "Use KAI annotations for fractional GPU intent and discuss hardware caveats.", minutes: 2, hasLab: true },
+  { id: "gpu", title: "Part VIII - Device Plugin & GPU Sharing", subtitle: "Switch allocation modes, then demonstrate fractional GPU scheduling", lessons: [
+    { slug: "gpu-sharing", title: "Device Plugin & GPU Sharing", blurb: "Switch from DRA to the device-plugin path, verify one-GPU allocation, then use KAI fractional GPU annotations.", minutes: 3, hasLab: true },
   ]},
   { id: "operations", title: "Part IX - Operations & Integration", subtitle: "Observe, debug, and connect KAI to the ecosystem", lessons: [
     { slug: "metrics-observability", title: "Metrics & Observability", blurb: "Create a KAI ServiceMonitor and query KAI metrics in Prometheus.", minutes: 4, hasLab: true },
