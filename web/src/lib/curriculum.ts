@@ -36,10 +36,7 @@ export const CURRICULUM: Part[] = [
     { slug: "binpack-spread", title: "Bin-Packing vs Spread & Consolidation", blurb: "Apply placement shards and compare node placement.", minutes: 2, hasLab: true },
     { slug: "topology-aware-scheduling", title: "Topology-Aware Scheduling", blurb: "Expand to 24 simulated nodes and enforce rack locality.", minutes: 4, hasLab: true },
   ]},
-  { id: "gpu", title: "Part VIII - Device Plugin & GPU Sharing", subtitle: "Switch allocation modes, then demonstrate fractional GPU scheduling", lessons: [
-    { slug: "gpu-sharing", title: "Device Plugin & GPU Sharing", blurb: "Switch from DRA to the device-plugin path, verify one-GPU allocation, then use KAI fractional GPU annotations.", minutes: 3, hasLab: true },
-  ]},
-  { id: "operations", title: "Part IX - Operations & Integration", subtitle: "Observe, debug, and connect KAI to the ecosystem", lessons: [
+  { id: "operations", title: "Part VIII - Operations & Integration", subtitle: "Observe, debug, and connect KAI to the ecosystem", lessons: [
     { slug: "metrics-observability", title: "Metrics & Observability", blurb: "Create a KAI ServiceMonitor and query KAI metrics in Prometheus.", minutes: 4, hasLab: true },
     { slug: "debugging-snapshots", title: "Debugging with Snapshots", blurb: "Use the snapshot endpoint and replay tool as an escalation path.", minutes: 2, hasLab: true },
     { slug: "ecosystem-integrations", title: "Ecosystem Integrations", blurb: "Review KubeRay, Kubeflow Training Operator, LeaderWorkerSet, and JobSet integration patterns.", minutes: 2 },

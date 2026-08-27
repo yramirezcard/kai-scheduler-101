@@ -4,7 +4,7 @@ metadata:
   name: kai-scheduler
   namespace: kai-scheduler
   labels:
-    kai-scheduler-101/chapter: "21"
+    kai-scheduler-101/chapter: "19"
     release: kube-prometheus-stack
 spec:
   selector:

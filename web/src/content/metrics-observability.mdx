@@ -7,13 +7,13 @@ This chapter assumes Prometheus and Grafana are already deployed, for example wi
 Display the KAI ServiceMonitor manifest.
 
 ```bash
-cat manifests/21-observability/kai-service-monitor.yaml
+cat manifests/19-observability/kai-service-monitor.yaml
 ```
 
 Apply the ServiceMonitor so Prometheus can discover KAI metrics.
 
 ```bash
-kubectl apply -f manifests/21-observability/kai-service-monitor.yaml
+kubectl apply -f manifests/19-observability/kai-service-monitor.yaml
 ```
 
 List ServiceMonitor objects that mention KAI.
@@ -99,7 +99,7 @@ max by (plugin) (kai_plugin_scheduling_latency_milliseconds) / 1000
 Delete the KAI ServiceMonitor first. It is installed into the `kai-scheduler` namespace.
 
 ```bash
-kubectl delete -f manifests/21-observability/kai-service-monitor.yaml --ignore-not-found
+kubectl delete -f manifests/19-observability/kai-service-monitor.yaml --ignore-not-found
 ```
 
 ## What Just Happened

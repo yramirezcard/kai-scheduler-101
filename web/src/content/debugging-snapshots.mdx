@@ -13,25 +13,25 @@ In this version, you first create a tiny scheduling scenario, then ask the sched
 Display the scenario manifest. It creates a namespace, a queue, a one-GPU claim template, and a two-replica KAI-scheduled workload so the snapshot has meaningful objects to collect.
 
 ```bash
-cat manifests/22-snapshots/01-snapshot-scenario.yaml
+cat manifests/20-snapshots/01-snapshot-scenario.yaml
 ```
 
 Apply the scenario.
 
 ```bash
-kubectl apply -f manifests/22-snapshots/01-snapshot-scenario.yaml
+kubectl apply -f manifests/20-snapshots/01-snapshot-scenario.yaml
 ```
 
 Give KAI a moment to create PodGroups and make placement decisions.
 
 ```bash
-kubectl get pods -n kai-lab22 -o wide
+kubectl get pods -n kai-lab20 -o wide
 ```
 
 Inspect the PodGroups that KAI created for the workload.
 
 ```bash
-kubectl get podgroups -n kai-lab22
+kubectl get podgroups -n kai-lab20
 ```
 
 List KAI services and Pods. The scheduler has a public service port, but the snapshot handler is bound to localhost inside the scheduler process on port `8081`.
@@ -112,13 +112,13 @@ kubectl get events -A --sort-by=.lastTimestamp
 Delete the scenario resources.
 
 ```bash
-kubectl delete -f manifests/22-snapshots/01-snapshot-scenario.yaml --ignore-not-found
+kubectl delete -f manifests/20-snapshots/01-snapshot-scenario.yaml --ignore-not-found
 ```
 
 Delete the snapshot debug namespace in case any helper resources remain.
 
 ```bash
-kubectl delete namespace kai-lab22 --ignore-not-found
+kubectl delete namespace kai-lab20 --ignore-not-found
 ```
 
 ## What Just Happened

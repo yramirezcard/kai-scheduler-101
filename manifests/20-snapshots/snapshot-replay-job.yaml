@@ -2,16 +2,16 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: kai-snapshot-replay
-  namespace: kai-lab22
+  namespace: kai-lab20
   labels:
-    kai-scheduler-101/chapter: "22"
+    kai-scheduler-101/chapter: "20"
 spec:
   backoffLimit: 1
   template:
     metadata:
       labels:
         app: kai-snapshot-replay
-        kai-scheduler-101/chapter: "22"
+        kai-scheduler-101/chapter: "20"
     spec:
       restartPolicy: Never
       volumes:
