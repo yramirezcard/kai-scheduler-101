@@ -22,6 +22,16 @@ List ServiceMonitor objects that mention KAI.
 kubectl get servicemonitor -A | grep kai || true
 ```
 
+Confirm that the ServiceMonitor selector matches the scheduler Service labels. The scheduler metrics Service should have `app=kai-scheduler-default`.
+
+```bash
+kubectl get svc -n kai-scheduler kai-scheduler-default --show-labels
+```
+
+```bash
+kubectl describe servicemonitor -n kai-scheduler kai-scheduler
+```
+
 List monitoring services. The bootstrap exposes Prometheus through Envoy Gateway on the second Brev tunnel, using the `/prometheus/` route.
 
 ```bash
@@ -58,18 +68,6 @@ Inspect how many samples Prometheus is scraping from KAI targets.
 
 ```promql
 scrape_samples_scraped{namespace="kai-scheduler"}
-```
-
-Query queue GPU allocation by queue name.
-
-```promql
-max by (queue_name) (kai_queue_allocated_gpus)
-```
-
-Compare deserved GPU allocation and scheduler fair-share. These are useful after you run queue, fair-share, or reclaim labs.
-
-```promql
-max by (queue_name) (kai_queue_deserved_gpus)
 ```
 
 Query computed GPU fair-share by queue.

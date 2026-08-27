@@ -5,12 +5,13 @@ metadata:
   namespace: kai-scheduler
   labels:
     kai-scheduler-101/chapter: "21"
+    release: kube-prometheus-stack
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/part-of: kai-scheduler
+      app: kai-scheduler-default
   namespaceSelector:
     matchNames: [kai-scheduler]
   endpoints:
-    - port: metrics
+    - port: http-metrics
       interval: 30s
